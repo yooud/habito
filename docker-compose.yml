@@ -1,0 +1,27 @@
+﻿services:
+  api:
+    image: yooud/habito-api
+    build:
+      context: packages/backend
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "9200:3000"
+
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: habito
+      MONGO_INITDB_ROOT_PASSWORD: otibah
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD","mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  mongo-data:
