@@ -35,7 +35,7 @@ jobs:
 
       - name: Download .env from R2
         run: |
-          aws s3 cp s3://${{ secrets.R2_BUCKET_NAME }}/habito/web/env .env
+          aws s3 cp s3://${{ secrets.R2_BUCKET_NAME }}/habito/web/env frontend/.env
 
       - name: Set up Node
         uses: actions/setup-node@v3
@@ -43,11 +43,11 @@ jobs:
           node-version: 21
 
       - name: Install dependencies
-        run: npm install
+        run: npm install -w frontend
 
       - name: Build the Vue app
-        run: npm run build
+        run: npm run build -w frontend
 
       - name: Copy files to server
         run: |
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" dist/ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/var/www/habito.yooud.org/
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" frontend/dist/ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/var/www/habito.yooud.org/

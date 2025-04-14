@@ -37,7 +37,7 @@ jobs:
 
       - name: Download appsettings.json from R2
         run: |
-          aws s3 cp s3://${{ secrets.R2_BUCKET_NAME }}/habito/api/env .env
+          aws s3 cp s3://${{ secrets.R2_BUCKET_NAME }}/habito/api/env backend/.env
 
       - name: Copy files to server
         run: |
