@@ -11,8 +11,8 @@
     },
     "type": "commonjs",
     "workspaces": [
-        "packages/frontend",
-        "packages/backend"
+        "frontend",
+        "backend"
     ],
     "devDependencies": {}
 }

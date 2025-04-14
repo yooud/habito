@@ -2,7 +2,7 @@
   api:
     image: yooud/habito-api
     build:
-      context: packages/backend
+      context: backend
     depends_on:
       mongo:
         condition: service_healthy
