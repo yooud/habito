@@ -1,0 +1,18 @@
+{
+    "name": "habito",
+    "version": "0.0.0",
+    "homepage": "https://github.com/yooud/habito#readme",
+    "bugs": {
+        "url": "https://github.com/yooud/habito/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yooud/habito.git"
+    },
+    "type": "commonjs",
+    "workspaces": [
+        "packages/frontend",
+        "packages/backend"
+    ],
+    "devDependencies": {}
+}
