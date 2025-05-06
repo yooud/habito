@@ -35,9 +35,13 @@ jobs:
           aws configure set region auto
           aws configure set endpoint_url https://${{ secrets.R2_ACCOUNT_ID }}.r2.cloudflarestorage.com
 
-      - name: Download appsettings.json from R2
+      - name: Download .env from R2
         run: |
           aws s3 cp s3://${{ secrets.R2_BUCKET_NAME }}/habito/api/env backend/.env
+
+      - name: Download firebase-service-account.json from R2
+        run: |
+          aws s3 cp s3://${{ secrets.R2_BUCKET_NAME }}/habito/api/firebase-service-account.json backend/firebase-service-account.json
 
       - name: Copy files to server
         run: |
