@@ -17,6 +17,9 @@ export class User extends Document {
 
   @Prop()
   name: string;
+
+  @Prop({ type: Number, default: 0 })
+  points: number;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User); 
