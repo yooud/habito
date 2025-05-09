@@ -2,6 +2,9 @@ import { Module, Global } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { FirebaseAuthService } from './firebase-auth.service';
 import * as path from 'path';
+import { config } from 'dotenv';
+
+config();
 
 @Global()
 @Module({

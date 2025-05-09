@@ -6,6 +6,9 @@ import { FirebaseAuthModule } from './firebase/firebase-admin.module';
 import { AuthModule } from './auth/auth.module';
 import { FamilyModule } from './family/family.module';
 import { HabitsModule } from './habits/habits.module';
+import { config } from 'dotenv';
+
+config();
 
 @Module({
   imports: [
