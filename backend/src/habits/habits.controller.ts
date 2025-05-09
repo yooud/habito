@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Quer
 import { HabitsService } from './habits.service';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { AssignHabitDto } from './dto/assign-habit.dto';
+import { CompleteHabitDto } from './dto/complete-habit.dto';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { RequestWithUser } from '../auth/types/request.types';
 
@@ -65,5 +66,19 @@ export class HabitsController {
   @Delete('assigned/:id')
   removeAssignment(@Req() req: RequestWithUser, @Param('id') id: string) {
     return this.habitsService.removeAssignment(id, req.user.uid);
+  }
+
+  @Post(':id/complete')
+  completeHabit(
+    @Req() req: RequestWithUser,
+    @Param('id') id: string,
+    @Body() completeHabitDto: CompleteHabitDto,
+  ) {
+    return this.habitsService.completeHabit(id, req.user.uid, completeHabitDto);
+  }
+
+  @Get(':id/completions')
+  getCompletions(@Req() req: RequestWithUser, @Param('id') id: string) {
+    return this.habitsService.getCompletions(id, req.user.uid);
   }
 } 

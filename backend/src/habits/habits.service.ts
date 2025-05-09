@@ -5,8 +5,10 @@ import { Habit } from '../schemas/habit.schema';
 import { User } from '../schemas/user.schema';
 import { HabitSchedule } from '../schemas/habit-schedule.schema';
 import { UserHabit } from '../schemas/user-habit.schema';
+import { HabitCompletion } from '../schemas/habit-completion.schema';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { AssignHabitDto } from './dto/assign-habit.dto';
+import { CompleteHabitDto } from './dto/complete-habit.dto';
 
 @Injectable()
 export class HabitsService {
@@ -15,6 +17,7 @@ export class HabitsService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(HabitSchedule.name) private habitScheduleModel: Model<HabitSchedule>,
     @InjectModel(UserHabit.name) private userHabitModel: Model<UserHabit>,
+    @InjectModel(HabitCompletion.name) private habitCompletionModel: Model<HabitCompletion>,
   ) {}
 
   private async validateFamilyMembership(uid: string) {
@@ -346,5 +349,119 @@ export class HabitsService {
     return {
       message: 'Assignment removed successfully',
     };
+  }
+
+  private async validateChildRole(user: User) {
+    if (user.role !== 'child') {
+      throw new BadRequestException('Only children can perform this action');
+    }
+  }
+
+  private async validateHabitAssignment(habitId: string, userId: Types.ObjectId) {
+    const assignment = await this.userHabitModel.findOne({
+      habitId,
+      userId,
+      isActive: true,
+    });
+
+    if (!assignment) {
+      throw new BadRequestException('Habit is not assigned to you or is not active');
+    }
+
+    return assignment;
+  }
+
+  private async validateSchedule(habitId: string) {
+    const today = new Date();
+    const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][today.getDay()];
+    
+    const schedule = await this.habitScheduleModel.findOne({
+      habitId,
+      dayOfWeek,
+    });
+
+    if (!schedule) {
+      throw new BadRequestException('This habit is not scheduled for today');
+    }
+  }
+
+  private async validateNoCompletionToday(userHabitId: Types.ObjectId) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const existingCompletion = await this.habitCompletionModel.findOne({
+      userHabitId,
+      completedAt: {
+        $gte: today,
+        $lt: tomorrow,
+      },
+    });
+
+    if (existingCompletion) {
+      throw new BadRequestException('Habit already completed today');
+    }
+  }
+
+  async completeHabit(habitId: string, uid: string, completeHabitDto: CompleteHabitDto) {
+    const child = await this.validateFamilyMembership(uid);
+    await this.validateChildRole(child);
+
+    // Get the habit and validate it exists
+    const habit = await this.habitModel.findById(habitId);
+    if (!habit) {
+      throw new NotFoundException('Habit not found');
+    }
+
+    // Validate the assignment
+    const assignment = await this.validateHabitAssignment(habitId, child._id as Types.ObjectId);
+
+    // Validate the schedule
+    await this.validateSchedule(habitId);
+    // Validate no completion today
+    await this.validateNoCompletionToday(assignment._id as Types.ObjectId);
+
+    // Create completion record
+    const completion = await this.habitCompletionModel.create({
+      userHabitId: assignment._id,
+      note: completeHabitDto.note,
+    });
+
+    // Update child's points
+    await this.userModel.findByIdAndUpdate(child._id, {
+      $inc: { points: habit.points },
+    });
+
+    // Get updated child info
+    const updatedChild = await this.userModel.findById(child._id);
+
+    return {
+      message: 'Habit completed successfully',
+      pointsEarned: habit.points,
+      totalPoints: updatedChild?.points,
+      completion,
+    };
+  }
+
+  async getCompletions(habitId: string, uid: string) {
+    const user = await this.validateFamilyMembership(uid);
+    
+    // Get the assignment
+    const assignment = await this.userHabitModel.findOne({
+      habitId,
+      userId: user._id,
+    });
+
+    if (!assignment) {
+      throw new NotFoundException('Habit is not assigned to you');
+    }
+
+    // Get completions
+    const completions = await this.habitCompletionModel.find({
+      userHabitId: assignment._id,
+    }).sort({ completedAt: -1 });
+
+    return completions;
   }
 } 
