@@ -5,6 +5,7 @@ import { HabitsService } from './habits.service';
 import { Habit, HabitSchema } from '../schemas/habit.schema';
 import { User, UserSchema } from '../schemas/user.schema';
 import { HabitSchedule, HabitScheduleSchema } from '../schemas/habit-schedule.schema';
+import { UserHabit, UserHabitSchema } from '../schemas/user-habit.schema';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { HabitSchedule, HabitScheduleSchema } from '../schemas/habit-schedule.sc
       { name: Habit.name, schema: HabitSchema },
       { name: User.name, schema: UserSchema },
       { name: HabitSchedule.name, schema: HabitScheduleSchema },
+      { name: UserHabit.name, schema: UserHabitSchema },
     ]),
   ],
   controllers: [HabitsController],

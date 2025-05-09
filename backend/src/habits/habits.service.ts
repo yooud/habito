@@ -4,7 +4,9 @@ import { Model, Types } from 'mongoose';
 import { Habit } from '../schemas/habit.schema';
 import { User } from '../schemas/user.schema';
 import { HabitSchedule } from '../schemas/habit-schedule.schema';
+import { UserHabit } from '../schemas/user-habit.schema';
 import { CreateHabitDto } from './dto/create-habit.dto';
+import { AssignHabitDto } from './dto/assign-habit.dto';
 
 @Injectable()
 export class HabitsService {
@@ -12,6 +14,7 @@ export class HabitsService {
     @InjectModel(Habit.name) private habitModel: Model<Habit>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(HabitSchedule.name) private habitScheduleModel: Model<HabitSchedule>,
+    @InjectModel(UserHabit.name) private userHabitModel: Model<UserHabit>,
   ) {}
 
   private async validateFamilyMembership(uid: string) {
@@ -23,6 +26,12 @@ export class HabitsService {
       throw new BadRequestException('User is not associated with any family');
     }
     return user;
+  }
+
+  private async validateParentRole(user: User) {
+    if (user.role !== 'parent') {
+      throw new BadRequestException('Only parents can perform this action');
+    }
   }
 
   private async validateHabitAccess(habitId: string, userFamilyId: Types.ObjectId) {
@@ -38,6 +47,20 @@ export class HabitsService {
     }
 
     return habit;
+  }
+
+  private async validateChildAccess(childUid: string, parentFamilyId: Types.ObjectId) {
+    const child = await this.userModel.findOne({ uid: childUid });
+    if (!child) {
+      throw new NotFoundException('Child not found');
+    }
+    if (child.role !== 'child') {
+      throw new BadRequestException('User is not a child');
+    }
+    if (child.familyId?.toString() !== parentFamilyId.toString()) {
+      throw new BadRequestException('Child does not belong to your family');
+    }
+    return child;
   }
 
   async create(uid: string, createHabitDto: CreateHabitDto) {
@@ -71,36 +94,98 @@ export class HabitsService {
   async findAll(uid: string) {
     const user = await this.validateFamilyMembership(uid);
 
-    // Get all habits created by family members
+    // Get all family members
     const familyMembers = await this.userModel.find({ familyId: user.familyId });
     const familyMemberIds = familyMembers.map(member => member._id);
 
+    // Get all habits created by family members
     const habits = await this.habitModel.find({
       createdBy: { $in: familyMemberIds },
     });
 
+    // Get all assignments for family members
+    const assignments = await this.userHabitModel.find({
+      userId: { $in: familyMemberIds },
+    }).populate('habitId');
+
     // Get schedules for all habits
-    const habitsWithSchedules = await Promise.all(
+    const habitsWithDetails = await Promise.all(
       habits.map(async habit => {
         const schedules = await this.habitScheduleModel.find({ habitId: habit._id });
+        
+        // Find assignments for this habit
+        const habitAssignments = assignments.filter(
+          assignment => assignment.habitId._id.toString() === (habit._id as unknown as string)
+        );
+
+        // Get assigned users details
+        const assignedUsers = await Promise.all(
+          habitAssignments.map(async assignment => {
+            const assignedUser = await this.userModel.findById(assignment.userId);
+            if (!assignedUser) {
+              return null;
+            }
+            return {
+              uid: assignedUser.uid,
+              name: assignedUser.name,
+              isActive: assignment.isActive,
+            };
+          })
+        );
+
+        // Filter out null values from assignedUsers
+        const validAssignedUsers = assignedUsers.filter((user): user is NonNullable<typeof user> => user !== null);
+
         return {
           ...habit.toObject(),
           schedule: schedules.map(s => s.dayOfWeek),
+          assignedTo: validAssignedUsers,
+          createdBy: familyMembers.find(member => 
+            (member._id as unknown as string) === (habit.createdBy as unknown as string)
+          )?.name || 'Unknown',
         };
       }),
     );
 
-    return habitsWithSchedules;
+    return habitsWithDetails;
   }
 
   async findOne(id: string, uid: string) {
     const user = await this.validateFamilyMembership(uid);
     const habit = await this.validateHabitAccess(id, user.familyId);
 
+    // Get schedules
     const schedules = await this.habitScheduleModel.find({ habitId: habit._id });
+
+    // Get all assignments for this habit
+    const assignments = await this.userHabitModel.find({ habitId: habit._id });
+
+    // Get assigned users details
+    const assignedUsers = await Promise.all(
+      assignments.map(async assignment => {
+        const assignedUser = await this.userModel.findById(assignment.userId);
+        if (!assignedUser) {
+          return null;
+        }
+        return {
+          uid: assignedUser.uid,
+          name: assignedUser.name,
+          isActive: assignment.isActive,
+        };
+      })
+    );
+
+    // Filter out null values from assignedUsers
+    const validAssignedUsers = assignedUsers.filter((user): user is NonNullable<typeof user> => user !== null);
+
+    // Get creator details
+    const creator = await this.userModel.findById(habit.createdBy);
+
     return {
       ...habit.toObject(),
       schedule: schedules.map(s => s.dayOfWeek),
+      assignedTo: validAssignedUsers,
+      createdBy: creator?.name || 'Unknown',
     };
   }
 
@@ -167,5 +252,99 @@ export class HabitsService {
     ]);
 
     return { message: 'Habit deleted successfully' };
+  }
+
+  async assignHabit(habitId: string, uid: string, assignHabitDto: AssignHabitDto) {
+    const parent = await this.validateFamilyMembership(uid);
+    await this.validateParentRole(parent);
+    
+    const habit = await this.validateHabitAccess(habitId, parent.familyId);
+    const child = await this.validateChildAccess(assignHabitDto.childUid, parent.familyId);
+
+    // Check if habit is already assigned to the child
+    const existingAssignment = await this.userHabitModel.findOne({
+      userId: child._id,
+      habitId: habit._id,
+    });
+
+    if (existingAssignment) {
+      throw new BadRequestException('Habit is already assigned to this child');
+    }
+
+    // Create the assignment
+    const userHabit = await this.userHabitModel.create({
+      userId: child._id,
+      habitId: habit._id,
+      isActive: assignHabitDto.isActive ?? true,
+    });
+
+    return {
+      message: 'Habit assigned successfully',
+      assignment: userHabit,
+    };
+  }
+
+  async getAssignedHabits(uid: string) {
+    const user = await this.validateFamilyMembership(uid);
+    
+    const assignments = await this.userHabitModel.find({ userId: user._id })
+      .populate('habitId');
+
+    return assignments.map(assignment => ({
+      ...assignment.toObject(),
+      habit: assignment.habitId,
+    }));
+  }
+
+  async updateAssignment(habitId: string, uid: string, isActive: boolean) {
+    const user = await this.validateFamilyMembership(uid);
+    await this.validateParentRole(user);
+    
+    const assignment = await this.userHabitModel.findOne({
+      habitId,
+    }).populate('userId');
+
+    if (!assignment) {
+      throw new NotFoundException('Habit assignment not found');
+    }
+
+    // Verify the assignment is for a child in the same family
+    const child = await this.userModel.findById(assignment.userId);
+    if (!child || child.familyId?.toString() !== user.familyId.toString()) {
+      throw new NotFoundException('Habit assignment not found');
+    }
+
+    assignment.isActive = isActive;
+    await assignment.save();
+
+    return {
+      message: 'Assignment updated successfully',
+      assignment,
+    };
+  }
+
+  async removeAssignment(habitId: string, uid: string) {
+    const user = await this.validateFamilyMembership(uid);
+    await this.validateParentRole(user);
+    
+    const assignment = await this.userHabitModel.findOne({
+      habitId,
+    }).populate('userId');
+
+    if (!assignment) {
+      throw new NotFoundException('Habit assignment not found');
+    }
+
+    // Verify the assignment is for a child in the same family
+    const child = await this.userModel.findById(assignment.userId);
+    if (!child || child.familyId?.toString() !== user.familyId.toString()) {
+      throw new NotFoundException('Habit assignment not found');
+    }
+
+    await assignment.deleteOne();
+
+    return {
+      message: 'Assignment removed successfully',
+    };
   }
 } 
