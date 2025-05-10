@@ -143,9 +143,7 @@ export class HabitsService {
           ...habit.toObject(),
           schedule: schedules.map(s => s.dayOfWeek),
           assignedTo: validAssignedUsers,
-          createdBy: familyMembers.find(member => 
-            (member._id as unknown as string) === (habit.createdBy as unknown as string)
-          )?.name || 'Unknown',
+          createdBy: (await this.userModel.findById(habit.createdBy))?.name || 'Unknown',
         };
       }),
     );
