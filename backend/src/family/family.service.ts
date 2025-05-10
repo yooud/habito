@@ -1,6 +1,6 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Family } from '../schemas/family.schema';
 import { User } from '../schemas/user.schema';
 import { CreateFamilyDto } from './dto/create-family.dto';
@@ -35,11 +35,12 @@ export class FamilyService {
       role: 'parent',
     });
 
-    return this.getFamilyWithMembers(family._id as unknown as string);
+    return this.getFamilyWithMembers((family._id as Types.ObjectId).toString());
   }
 
   async addMember(familyId: string, addMemberDto: AddMemberDto) {
-    const family = await this.familyModel.findById(familyId);
+    const familyObjectId = new Types.ObjectId(familyId);
+    const family = await this.familyModel.findById(familyObjectId);
     if (!family) {
       throw new NotFoundException('Family not found');
     }
@@ -54,7 +55,7 @@ export class FamilyService {
     }
 
     await this.userModel.findByIdAndUpdate(user._id, {
-      familyId,
+      familyId: familyObjectId,
       role: addMemberDto.role,
     });
 
@@ -62,12 +63,13 @@ export class FamilyService {
   }
 
   async deleteFamily(familyId: string, uid: string) {
-    const family = await this.familyModel.findById(familyId);
+    const familyObjectId = new Types.ObjectId(familyId);
+    const family = await this.familyModel.findById(familyObjectId);
     if (!family) {
       throw new NotFoundException('Family not found');
     }
 
-    const user = await this.userModel.findOne({ uid, familyId });
+    const user = await this.userModel.findOne({ uid, familyId: familyObjectId });
     if (!user) {
       throw new NotFoundException('User not found in this family');
     }
@@ -76,22 +78,23 @@ export class FamilyService {
     }
 
     await this.userModel.updateMany(
-      { familyId },
+      { familyId: familyObjectId },
       { $set: { familyId: null, role: null } }
     );
 
-    await this.familyModel.findByIdAndDelete(familyId);
+    await this.familyModel.findByIdAndDelete(familyObjectId);
 
     return { message: 'Family deleted successfully' };
   }
 
   async getFamilyWithMembers(familyId: string) {
-    const family = await this.familyModel.findById(familyId);
+    const familyObjectId = new Types.ObjectId(familyId);
+    const family = await this.familyModel.findById(familyObjectId);
     if (!family) {
       return null;
     }
 
-    const members = await this.userModel.find({ familyId });
+    const members = await this.userModel.find({ familyId: familyObjectId });
     
     return {
       family,
