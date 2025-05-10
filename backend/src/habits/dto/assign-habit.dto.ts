@@ -2,7 +2,7 @@ import { IsString, IsBoolean, IsOptional } from 'class-validator';
 
 export class AssignHabitDto {
   @IsString()
-  childUid: string;
+  childId: string;
 
   @IsBoolean()
   @IsOptional()

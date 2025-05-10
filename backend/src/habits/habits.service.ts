@@ -262,7 +262,16 @@ export class HabitsService {
     await this.validateParentRole(parent);
     
     const habit = await this.validateHabitAccess(habitId, parent.familyId);
-    const child = await this.validateChildAccess(assignHabitDto.childUid, parent.familyId);
+    const child = await this.userModel.findById(assignHabitDto.childId);
+    if (!child) {
+      throw new NotFoundException('Child not found');
+    }
+    if (child.role !== 'child') {
+      throw new BadRequestException('User is not a child');
+    }
+    if (child.familyId?.toString() !== parent.familyId.toString()) {
+      throw new BadRequestException('Child does not belong to your family');
+    }
 
     // Check if habit is already assigned to the child
     const existingAssignment = await this.userHabitModel.findOne({
