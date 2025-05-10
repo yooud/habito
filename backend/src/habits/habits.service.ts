@@ -298,12 +298,26 @@ export class HabitsService {
     const user = await this.validateFamilyMembership(uid);
     
     const assignments = await this.userHabitModel.find({ userId: user._id })
-      .populate('habitId');
+      .populate<{ habitId: Habit }>('habitId');
 
-    return assignments.map(assignment => ({
-      ...assignment.toObject(),
-      habit: assignment.habitId,
+    const assignmentsWithSchedules = await Promise.all(assignments.map(async assignment => {
+      const schedule = await this.habitScheduleModel.find({ habitId: assignment.habitId._id });
+      
+      return {
+        id: assignment._id,
+        isActive: assignment.isActive,
+        habit: {
+          id: assignment.habitId._id,
+          title: assignment.habitId.title,
+          description: assignment.habitId.description,
+          points: assignment.habitId.points,
+          createdBy: assignment.habitId.createdBy,
+          schedule: schedule.map(s => s.dayOfWeek)
+        }
+      };
     }));
+
+    return assignmentsWithSchedules;
   }
 
   async updateAssignment(habitId: string, uid: string, isActive: boolean) {
