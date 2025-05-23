@@ -1,5 +1,3 @@
-import type { isAccessor } from "typescript";
-
 export const enum SCHEDULE_DAYS {
   MON = 'Mon',
   TUE = 'Tue',
