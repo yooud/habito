@@ -6,7 +6,7 @@ import { createPinia } from 'pinia';
 import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 import { ConfirmationService, Ripple, ToastService } from 'primevue';
-
+import router from './router';
 
 const MyPreset = definePreset(Aura, {
     semantic: {
@@ -29,6 +29,7 @@ const MyPreset = definePreset(Aura, {
 const app = createApp(App);
 
 app.use(createPinia());
+app.use(router);
 app.use(PrimeVue, {
     theme: {
         preset: MyPreset,
