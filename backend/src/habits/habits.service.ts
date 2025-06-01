@@ -534,25 +534,109 @@ export class HabitsService {
   }
 
   async getCompletions(habitId: string, uid: string) {
-    const user = await this.validateFamilyMembership(uid);
-
-    // Get the assignment
-    const assignment = await this.userHabitModel.findOne({
-      habitId: new Types.ObjectId(habitId),
-      userId: user._id,
-    });
-
-    if (!assignment) {
-      throw new NotFoundException('Habit is not assigned to you');
+    const user = await this.userModel.findOne({ uid });
+    if (!user || !user.familyId) {
+      throw new NotFoundException('User not found or not in a family');
     }
 
-    // Get completions
-    const completions = await this.habitCompletionModel
-      .find({
-        userHabitId: assignment._id,
-      })
-      .sort({ completedAt: -1 });
+    let habitObjectId: Types.ObjectId;
+    try {
+      habitObjectId = new Types.ObjectId(habitId);
+    } catch {
+      throw new BadRequestException('Invalid habitId format');
+    }
 
-    return completions;
+    if (user.role === 'child') {
+      const assignment = await this.userHabitModel.findOne({
+        habitId: habitObjectId,
+        userId: user._id,
+      });
+
+      if (!assignment) {
+        throw new NotFoundException('Habit is not assigned to you');
+      }
+
+      const completions = await this.habitCompletionModel
+        .find({ userHabitId: assignment._id })
+        .sort({ completedAt: -1 });
+
+      return completions;
+    }
+
+    if (user.role === 'parent') {
+      const familyId = user.familyId;
+
+      // 4.1. Найти всех детей в семье
+      const children = await this.userModel
+        .find({ familyId, role: 'child' })
+        .select('_id uid email name role')
+        .lean();
+
+      const childIds = children.map((c) => c._id);
+
+      // 4.2. Найти все назначения (UserHabit) для этого habitId и для детей
+      const assignments = await this.userHabitModel
+        .find({
+          habitId: habitObjectId,
+          userId: { $in: childIds },
+        })
+        .select('_id userId')
+        .lean();
+      if (assignments.length === 0) {
+        return [];
+      }
+
+      const assignmentIds = assignments.map((a) => a._id);
+
+      // 4.3. Получить все завершения для найденных assignments
+      const completions = await this.habitCompletionModel
+        .find({ userHabitId: { $in: assignmentIds } })
+        .sort({ completedAt: -1 })
+        .lean();
+
+      // 4.4. Построить маппинг assignmentId → userId
+      const userIdByAssignmentId = assignments.reduce<
+        Record<string, Types.ObjectId>
+      >((acc, a) => {
+        acc[a._id.toString()] = a.userId;
+        return acc;
+      }, {});
+
+      // 4.5. Построить маппинг userId → userInfo (данные ребёнка)
+      const userInfoById = children.reduce<
+        Record<
+          string,
+          {
+            id: string;
+            uid: string;
+            email: string;
+            name: string;
+            role: string;
+          }
+        >
+      >((acc, c) => {
+        acc[c._id.toString()] = {
+          id: c._id.toString(),
+          uid: c.uid,
+          email: c.email,
+          name: c.name,
+          role: c.role,
+        };
+        return acc;
+      }, {});
+
+      // 4.6. Сформировать финальный массив, добавляя к каждому completion объект user
+      const completionsWithUser = completions.map((comp) => {
+        const childId = userIdByAssignmentId[comp.userHabitId.toString()];
+        return {
+          ...comp,
+          user: userInfoById[childId.toString()],
+        };
+      });
+
+      return completionsWithUser;
+    }
+
+    throw new BadRequestException('Invalid role');
   }
 }
