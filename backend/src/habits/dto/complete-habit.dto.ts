@@ -4,4 +4,4 @@ export class CompleteHabitDto {
   @IsString()
   @IsOptional()
   note?: string;
-} 
+}

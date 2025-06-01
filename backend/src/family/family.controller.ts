@@ -30,7 +30,9 @@ export class FamilyController {
       throw new NotFoundException('User is not associated with any family');
     }
 
-    const familyWithMembers = await this.familyService.getFamilyWithMembers(user.familyId.toString());
+    const familyWithMembers = await this.familyService.getFamilyWithMembers(
+      user.familyId.toString(),
+    );
     if (!familyWithMembers) {
       throw new NotFoundException('Family not found');
     }
@@ -45,7 +47,7 @@ export class FamilyController {
   ) {
     return this.familyService.createFamily(req.user.uid, createFamilyDto);
   }
-  
+
   @Post('members')
   async addMember(
     @Req() req: RequestWithUser,
@@ -96,6 +98,9 @@ export class FamilyController {
       throw new BadRequestException('Only parents can delete the family');
     }
 
-    return this.familyService.deleteFamily(user.familyId.toString(), req.user.uid);
+    return this.familyService.deleteFamily(
+      user.familyId.toString(),
+      req.user.uid,
+    );
   }
-} 
+}

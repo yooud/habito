@@ -7,4 +7,4 @@ export class Family extends Document {
   name: string;
 }
 
-export const FamilySchema = SchemaFactory.createForClass(Family); 
+export const FamilySchema = SchemaFactory.createForClass(Family);

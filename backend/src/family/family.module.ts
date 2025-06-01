@@ -15,4 +15,4 @@ import { User, UserSchema } from '../schemas/user.schema';
   controllers: [FamilyController],
   providers: [FamilyService],
 })
-export class FamilyModule {} 
+export class FamilyModule {}

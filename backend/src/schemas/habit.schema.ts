@@ -16,4 +16,4 @@ export class Habit extends Document {
   createdBy: Types.ObjectId;
 }
 
-export const HabitSchema = SchemaFactory.createForClass(Habit); 
+export const HabitSchema = SchemaFactory.createForClass(Habit);

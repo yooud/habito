@@ -9,11 +9,15 @@ export class UserReward extends Document {
   @Prop({ type: Types.ObjectId, ref: 'Reward', required: true })
   rewardId: Types.ObjectId;
 
-  @Prop({ required: true, enum: ['available', 'redeemed'], default: 'available' })
+  @Prop({
+    required: true,
+    enum: ['available', 'redeemed'],
+    default: 'available',
+  })
   status: string;
 
   @Prop()
   redeemedAt: Date;
 }
 
-export const UserRewardSchema = SchemaFactory.createForClass(UserReward); 
+export const UserRewardSchema = SchemaFactory.createForClass(UserReward);

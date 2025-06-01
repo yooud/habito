@@ -13,4 +13,4 @@ export class AuthController {
     const user = await this.authService.verifyAndCreateUser(req.user);
     return { user };
   }
-} 
+}

@@ -22,4 +22,4 @@ export class User extends Document {
   points: number;
 }
 
-export const UserSchema = SchemaFactory.createForClass(User); 
+export const UserSchema = SchemaFactory.createForClass(User);

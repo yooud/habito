@@ -19,4 +19,4 @@ export class Reward extends Document {
   createdBy: Types.ObjectId;
 }
 
-export const RewardSchema = SchemaFactory.createForClass(Reward); 
+export const RewardSchema = SchemaFactory.createForClass(Reward);

@@ -13,7 +13,10 @@ config();
 @Module({
   imports: [
     FirebaseAuthModule,
-    MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://habito:otibah@localhost:27017/habito?authSource=admin'),
+    MongooseModule.forRoot(
+      process.env.MONGODB_URI ||
+        'mongodb://habito:otibah@localhost:27017/habito?authSource=admin',
+    ),
     AuthModule,
     FamilyModule,
     HabitsModule,

@@ -3,13 +3,15 @@ import { UserRole } from './add-member.dto';
 
 export class UpdateMemberDto {
   @IsOptional()
-  @IsString({ message: 'name должен быть строкой' })
+  @IsString({ message: 'name must be a string' })
   name?: string;
 
   @IsOptional()
-  @IsEnum(UserRole, { message: 'role должен быть "parent" или "child"' })
+  @IsEnum(UserRole, { message: 'role must be either "parent" or "child"' })
   role?: UserRole;
 
-  @ValidateIf(o => o.name === undefined && o.role === undefined)
+  @ValidateIf(
+    (o: UpdateMemberDto) => o.name === undefined && o.role === undefined,
+  )
   _atLeastOne?: any;
 }

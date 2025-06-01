@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Family } from '../schemas/family.schema';
@@ -115,7 +120,10 @@ export class FamilyService {
       throw new NotFoundException('Family not found');
     }
 
-    const user = await this.userModel.findOne({ uid, familyId: familyObjectId });
+    const user = await this.userModel.findOne({
+      uid,
+      familyId: familyObjectId,
+    });
     if (!user) {
       throw new NotFoundException('User not found in this family');
     }
@@ -125,7 +133,7 @@ export class FamilyService {
 
     await this.userModel.updateMany(
       { familyId: familyObjectId },
-      { $set: { familyId: null, role: null } }
+      { $set: { familyId: null, role: null } },
     );
 
     await this.familyModel.findByIdAndDelete(familyObjectId);
@@ -141,10 +149,10 @@ export class FamilyService {
     }
 
     const members = await this.userModel.find({ familyId: familyObjectId });
-    
+
     return {
       family,
-      members: members.map(member => ({
+      members: members.map((member) => ({
         id: member._id,
         uid: member.uid,
         email: member.email,
@@ -153,4 +161,4 @@ export class FamilyService {
       })),
     };
   }
-} 
+}

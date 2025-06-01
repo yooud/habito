@@ -16,4 +16,4 @@ export class UserHabit extends Document {
   isActive: boolean;
 }
 
-export const UserHabitSchema = SchemaFactory.createForClass(UserHabit); 
+export const UserHabitSchema = SchemaFactory.createForClass(UserHabit);
