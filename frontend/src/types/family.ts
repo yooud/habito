@@ -9,6 +9,7 @@ export interface FamilyMember {
   email: string;
   name: string;
   role: string;
+  points: number;
 }
 
 export interface FamilyResponse {
