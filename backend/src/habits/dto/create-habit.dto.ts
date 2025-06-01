@@ -1,4 +1,10 @@
-import { IsString, IsNumber, IsOptional, IsArray, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsArray,
+  IsEnum,
+} from 'class-validator';
 
 export enum DayOfWeek {
   MON = 'Mon',
@@ -24,4 +30,4 @@ export class CreateHabitDto {
   @IsArray()
   @IsEnum(DayOfWeek, { each: true })
   schedule: DayOfWeek[];
-} 
+}

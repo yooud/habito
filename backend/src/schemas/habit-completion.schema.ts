@@ -10,4 +10,5 @@ export class HabitCompletion extends Document {
   completedAt: Date;
 }
 
-export const HabitCompletionSchema = SchemaFactory.createForClass(HabitCompletion); 
+export const HabitCompletionSchema =
+  SchemaFactory.createForClass(HabitCompletion);

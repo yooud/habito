@@ -1,10 +1,16 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Family } from '../schemas/family.schema';
 import { User } from '../schemas/user.schema';
 import { CreateFamilyDto } from './dto/create-family.dto';
 import { AddMemberDto } from './dto/add-member.dto';
+import { UpdateMemberDto } from './dto/update-member.dto';
 
 @Injectable()
 export class FamilyService {
@@ -62,6 +68,51 @@ export class FamilyService {
     return this.getFamilyWithMembers(familyId);
   }
 
+  async updateMember(
+    familyId: string,
+    memberId: string,
+    updateDto: UpdateMemberDto,
+  ) {
+    const familyObjectId = new Types.ObjectId(familyId);
+    const family = await this.familyModel.findById(familyObjectId);
+    if (!family) {
+      throw new NotFoundException('Family not found');
+    }
+
+    let memberObjectId: Types.ObjectId;
+    try {
+      memberObjectId = new Types.ObjectId(memberId);
+    } catch {
+      throw new BadRequestException('Invalid memberId format');
+    }
+
+    const member = await this.userModel.findOne({
+      _id: memberObjectId,
+      familyId: familyObjectId,
+    });
+    if (!member) {
+      throw new NotFoundException('User not found in this family');
+    }
+
+    const updateData: Partial<Pick<User, 'name' | 'role'>> = {};
+    if (updateDto.name !== undefined) {
+      updateData.name = updateDto.name;
+    }
+    if (updateDto.role !== undefined) {
+      updateData.role = updateDto.role;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
+    await this.userModel.findByIdAndUpdate(memberObjectId, {
+      $set: updateData,
+    });
+
+    return this.getFamilyWithMembers(familyId);
+  }
+
   async deleteFamily(familyId: string, uid: string) {
     const familyObjectId = new Types.ObjectId(familyId);
     const family = await this.familyModel.findById(familyObjectId);
@@ -69,7 +120,10 @@ export class FamilyService {
       throw new NotFoundException('Family not found');
     }
 
-    const user = await this.userModel.findOne({ uid, familyId: familyObjectId });
+    const user = await this.userModel.findOne({
+      uid,
+      familyId: familyObjectId,
+    });
     if (!user) {
       throw new NotFoundException('User not found in this family');
     }
@@ -79,7 +133,7 @@ export class FamilyService {
 
     await this.userModel.updateMany(
       { familyId: familyObjectId },
-      { $set: { familyId: null, role: null } }
+      { $set: { familyId: null, role: null } },
     );
 
     await this.familyModel.findByIdAndDelete(familyObjectId);
@@ -95,16 +149,17 @@ export class FamilyService {
     }
 
     const members = await this.userModel.find({ familyId: familyObjectId });
-    
+
     return {
       family,
-      members: members.map(member => ({
+      members: members.map((member) => ({
         id: member._id,
         uid: member.uid,
         email: member.email,
         name: member.name,
         role: member.role,
+        points: member.points,
       })),
     };
   }
-} 
+}

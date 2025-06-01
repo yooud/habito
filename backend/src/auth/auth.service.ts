@@ -6,23 +6,21 @@ import { DecodedIdToken } from 'firebase-admin/auth';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    @InjectModel(User.name) private userModel: Model<User>,
-  ) {}
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
   async verifyAndCreateUser(decodedToken: DecodedIdToken) {
     let user = await this.userModel.findOne({ uid: decodedToken.uid });
-    
+
     if (!user) {
       user = await this.userModel.create({
         uid: decodedToken.uid,
         email: decodedToken.email,
-        name: decodedToken.name || '',
+        name: (decodedToken.name as string) || '',
         role: null,
         familyId: null,
       });
     }
-    
+
     return user;
   }
-} 
+}

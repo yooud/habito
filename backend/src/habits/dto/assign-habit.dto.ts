@@ -7,4 +7,4 @@ export class AssignHabitDto {
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
-} 
+}

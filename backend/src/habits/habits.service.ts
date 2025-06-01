@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Habit } from '../schemas/habit.schema';
@@ -15,9 +19,11 @@ export class HabitsService {
   constructor(
     @InjectModel(Habit.name) private habitModel: Model<Habit>,
     @InjectModel(User.name) private userModel: Model<User>,
-    @InjectModel(HabitSchedule.name) private habitScheduleModel: Model<HabitSchedule>,
+    @InjectModel(HabitSchedule.name)
+    private habitScheduleModel: Model<HabitSchedule>,
     @InjectModel(UserHabit.name) private userHabitModel: Model<UserHabit>,
-    @InjectModel(HabitCompletion.name) private habitCompletionModel: Model<HabitCompletion>,
+    @InjectModel(HabitCompletion.name)
+    private habitCompletionModel: Model<HabitCompletion>,
   ) {}
 
   private async validateFamilyMembership(uid: string) {
@@ -31,19 +37,21 @@ export class HabitsService {
     return user;
   }
 
-  private async validateParentRole(user: User) {
+  private validateParentRole(user: User) {
     if (user.role !== 'parent') {
       throw new BadRequestException('Only parents can perform this action');
     }
   }
 
-  private async validateHabitAccess(habitId: string, userFamilyId: Types.ObjectId) {
+  private async validateHabitAccess(
+    habitId: string,
+    userFamilyId: Types.ObjectId,
+  ) {
     const habit = await this.habitModel.findById(new Types.ObjectId(habitId));
     if (!habit) {
       throw new NotFoundException('Habit not found');
     }
 
-    // Check if the habit creator is in the same family
     const creator = await this.userModel.findById(habit.createdBy);
     if (!creator || creator.familyId?.toString() !== userFamilyId.toString()) {
       throw new NotFoundException('Habit not found');
@@ -52,7 +60,10 @@ export class HabitsService {
     return habit;
   }
 
-  private async validateChildAccess(childUid: string, parentFamilyId: Types.ObjectId) {
+  private async validateChildAccess(
+    childUid: string,
+    parentFamilyId: Types.ObjectId,
+  ) {
     const child = await this.userModel.findOne({ uid: childUid });
     if (!child) {
       throw new NotFoundException('Child not found');
@@ -76,8 +87,7 @@ export class HabitsService {
       createdBy: user._id,
     });
 
-    // Create schedule entries
-    const schedulePromises = createHabitDto.schedule.map(dayOfWeek =>
+    const schedulePromises = createHabitDto.schedule.map((dayOfWeek) =>
       this.habitScheduleModel.create({
         habitId: habit._id,
         dayOfWeek,
@@ -86,45 +96,50 @@ export class HabitsService {
 
     await Promise.all(schedulePromises);
 
-    // Return habit with its schedule
-    const schedules = await this.habitScheduleModel.find({ habitId: habit._id });
+    const schedules = await this.habitScheduleModel.find({
+      habitId: habit._id,
+    });
     return {
       ...habit.toObject(),
-      schedule: schedules.map(s => s.dayOfWeek),
+      schedule: schedules.map((s) => s.dayOfWeek),
     };
   }
 
   async findAll(uid: string) {
     const user = await this.validateFamilyMembership(uid);
 
-    // Get all family members
-    const familyMembers = await this.userModel.find({ familyId: user.familyId });
-    const familyMemberIds = familyMembers.map(member => member._id);
+    const familyMembers = await this.userModel.find({
+      familyId: user.familyId,
+    });
+    const familyMemberIds = familyMembers.map((member) => member._id);
 
-    // Get all habits created by family members
     const habits = await this.habitModel.find({
       createdBy: { $in: familyMemberIds },
     });
 
-    // Get all assignments for family members
-    const assignments = await this.userHabitModel.find({
-      userId: { $in: familyMemberIds },
-    }).populate('habitId');
+    const assignments = await this.userHabitModel
+      .find({
+        userId: { $in: familyMemberIds },
+      })
+      .populate('habitId');
 
-    // Get schedules for all habits
     const habitsWithDetails = await Promise.all(
-      habits.map(async habit => {
-        const schedules = await this.habitScheduleModel.find({ habitId: habit._id });
-        
-        // Find assignments for this habit
+      habits.map(async (habit) => {
+        const schedules = await this.habitScheduleModel.find({
+          habitId: habit._id,
+        });
+
         const habitAssignments = assignments.filter(
-          assignment => assignment.habitId._id.toString() === (habit._id as Types.ObjectId).toString()
+          (assignment) =>
+            assignment.habitId._id.toString() ===
+            (habit._id as Types.ObjectId).toString(),
         );
 
-        // Get assigned users details
         const assignedUsers = await Promise.all(
-          habitAssignments.map(async assignment => {
-            const assignedUser = await this.userModel.findById(assignment.userId);
+          habitAssignments.map(async (assignment) => {
+            const assignedUser = await this.userModel.findById(
+              assignment.userId,
+            );
             if (!assignedUser) {
               return null;
             }
@@ -133,17 +148,19 @@ export class HabitsService {
               name: assignedUser.name,
               isActive: assignment.isActive,
             };
-          })
+          }),
         );
 
-        // Filter out null values from assignedUsers
-        const validAssignedUsers = assignedUsers.filter((user): user is NonNullable<typeof user> => user !== null);
+        const validAssignedUsers = assignedUsers.filter(
+          (user): user is NonNullable<typeof user> => user !== null,
+        );
 
         return {
           ...habit.toObject(),
-          schedule: schedules.map(s => s.dayOfWeek),
+          schedule: schedules.map((s) => s.dayOfWeek),
           assignedTo: validAssignedUsers,
-          createdBy: (await this.userModel.findById(habit.createdBy))?.name || 'Unknown',
+          createdBy:
+            (await this.userModel.findById(habit.createdBy))?.name || 'Unknown',
         };
       }),
     );
@@ -155,15 +172,17 @@ export class HabitsService {
     const user = await this.validateFamilyMembership(uid);
     const habit = await this.validateHabitAccess(id, user.familyId);
 
-    // Get schedules
-    const schedules = await this.habitScheduleModel.find({ habitId: new Types.ObjectId(id) });
+    const schedules = await this.habitScheduleModel.find({
+      habitId: new Types.ObjectId(id),
+    });
 
-    // Get all assignments for this habit
-    const assignments = await this.userHabitModel.find({ habitId: new Types.ObjectId(id) });
+    const assignments = await this.userHabitModel.find({
+      habitId: new Types.ObjectId(id),
+    });
 
     // Get assigned users details
     const assignedUsers = await Promise.all(
-      assignments.map(async assignment => {
+      assignments.map(async (assignment) => {
         const assignedUser = await this.userModel.findById(assignment.userId);
         if (!assignedUser) {
           return null;
@@ -173,29 +192,37 @@ export class HabitsService {
           name: assignedUser.name,
           isActive: assignment.isActive,
         };
-      })
+      }),
     );
 
     // Filter out null values from assignedUsers
-    const validAssignedUsers = assignedUsers.filter((user): user is NonNullable<typeof user> => user !== null);
+    const validAssignedUsers = assignedUsers.filter(
+      (user): user is NonNullable<typeof user> => user !== null,
+    );
 
     // Get creator details
     const creator = await this.userModel.findById(habit.createdBy);
 
     return {
       ...habit.toObject(),
-      schedule: schedules.map(s => s.dayOfWeek),
+      schedule: schedules.map((s) => s.dayOfWeek),
       assignedTo: validAssignedUsers,
       createdBy: creator?.name || 'Unknown',
     };
   }
 
-  async update(id: string, uid: string, updateHabitDto: Partial<CreateHabitDto>) {
+  async update(
+    id: string,
+    uid: string,
+    updateHabitDto: Partial<CreateHabitDto>,
+  ) {
     const user = await this.validateFamilyMembership(uid);
     const habit = await this.validateHabitAccess(id, user.familyId);
 
     // Only the creator can update the habit
-    if (habit.createdBy.toString() !== (user._id as Types.ObjectId).toString()) {
+    if (
+      habit.createdBy.toString() !== (user._id as Types.ObjectId).toString()
+    ) {
       throw new BadRequestException('Only the creator can update this habit');
     }
 
@@ -220,7 +247,7 @@ export class HabitsService {
       await this.habitScheduleModel.deleteMany({ habitId: habit._id });
 
       // Create new schedules
-      const schedulePromises = updateHabitDto.schedule.map(dayOfWeek =>
+      const schedulePromises = updateHabitDto.schedule.map((dayOfWeek) =>
         this.habitScheduleModel.create({
           habitId: habit._id,
           dayOfWeek,
@@ -230,10 +257,12 @@ export class HabitsService {
       await Promise.all(schedulePromises);
     }
 
-    const schedules = await this.habitScheduleModel.find({ habitId: habit._id });
+    const schedules = await this.habitScheduleModel.find({
+      habitId: habit._id,
+    });
     return {
       ...updatedHabit.toObject(),
-      schedule: schedules.map(s => s.dayOfWeek),
+      schedule: schedules.map((s) => s.dayOfWeek),
     };
   }
 
@@ -242,7 +271,9 @@ export class HabitsService {
     const habit = await this.validateHabitAccess(id, user.familyId);
 
     // Only the creator can delete the habit
-    if (habit.createdBy.toString() !== (user._id as Types.ObjectId).toString()) {
+    if (
+      habit.createdBy.toString() !== (user._id as Types.ObjectId).toString()
+    ) {
       throw new BadRequestException('Only the creator can delete this habit');
     }
 
@@ -252,18 +283,30 @@ export class HabitsService {
       this.habitModel.findByIdAndDelete(habitObjectId),
       this.habitScheduleModel.deleteMany({ habitId: habitObjectId }),
       this.userHabitModel.deleteMany({ habitId: habitObjectId }),
-      this.habitCompletionModel.deleteMany({ userHabitId: { $in: await this.userHabitModel.find({ habitId: habitObjectId }).distinct('_id') } }),
+      this.habitCompletionModel.deleteMany({
+        userHabitId: {
+          $in: await this.userHabitModel
+            .find({ habitId: habitObjectId })
+            .distinct('_id'),
+        },
+      }),
     ]);
 
     return { message: 'Habit deleted successfully' };
   }
 
-  async assignHabit(habitId: string, uid: string, assignHabitDto: AssignHabitDto) {
+  async assignHabit(
+    habitId: string,
+    uid: string,
+    assignHabitDto: AssignHabitDto,
+  ) {
     const parent = await this.validateFamilyMembership(uid);
-    await this.validateParentRole(parent);
-    
+    this.validateParentRole(parent);
+
     const habit = await this.validateHabitAccess(habitId, parent.familyId);
-    const child = await this.userModel.findById(new Types.ObjectId(assignHabitDto.childId));
+    const child = await this.userModel.findById(
+      new Types.ObjectId(assignHabitDto.childId),
+    );
     if (!child) {
       throw new NotFoundException('Child not found');
     }
@@ -299,37 +342,43 @@ export class HabitsService {
 
   async getAssignedHabits(uid: string) {
     const user = await this.validateFamilyMembership(uid);
-    
-    const assignments = await this.userHabitModel.find({ userId: user._id })
+
+    const assignments = await this.userHabitModel
+      .find({ userId: user._id })
       .populate<{ habitId: Habit }>('habitId');
 
-    const assignmentsWithSchedules = await Promise.all(assignments.map(async assignment => {
-      const schedule = await this.habitScheduleModel.find({ habitId: assignment.habitId._id });
-      
-      return {
-        id: assignment._id,
-        isActive: assignment.isActive,
-        habit: {
-          id: assignment.habitId._id,
-          title: assignment.habitId.title,
-          description: assignment.habitId.description,
-          points: assignment.habitId.points,
-          createdBy: assignment.habitId.createdBy,
-          schedule: schedule.map(s => s.dayOfWeek)
-        }
-      };
-    }));
+    const assignmentsWithSchedules = await Promise.all(
+      assignments.map(async (assignment) => {
+        const schedule = await this.habitScheduleModel.find({
+          habitId: assignment.habitId._id,
+        });
+        return {
+          id: assignment._id,
+          isActive: assignment.isActive,
+          habit: {
+            id: assignment.habitId._id,
+            title: assignment.habitId.title,
+            description: assignment.habitId.description,
+            points: assignment.habitId.points,
+            createdBy: assignment.habitId.createdBy,
+            schedule: schedule.map((s) => s.dayOfWeek),
+          },
+        };
+      }),
+    );
 
     return assignmentsWithSchedules;
   }
 
   async updateAssignment(habitId: string, uid: string, isActive: boolean) {
     const user = await this.validateFamilyMembership(uid);
-    await this.validateParentRole(user);
-    
-    const assignment = await this.userHabitModel.findOne({
-      habitId: new Types.ObjectId(habitId),
-    }).populate('userId');
+    this.validateParentRole(user);
+
+    const assignment = await this.userHabitModel
+      .findOne({
+        habitId: new Types.ObjectId(habitId),
+      })
+      .populate('userId');
 
     if (!assignment) {
       throw new NotFoundException('Habit assignment not found');
@@ -352,11 +401,13 @@ export class HabitsService {
 
   async removeAssignment(habitId: string, uid: string) {
     const user = await this.validateFamilyMembership(uid);
-    await this.validateParentRole(user);
-    
-    const assignment = await this.userHabitModel.findOne({
-      habitId: new Types.ObjectId(habitId),
-    }).populate('userId');
+    this.validateParentRole(user);
+
+    const assignment = await this.userHabitModel
+      .findOne({
+        habitId: new Types.ObjectId(habitId),
+      })
+      .populate('userId');
 
     if (!assignment) {
       throw new NotFoundException('Habit assignment not found');
@@ -375,13 +426,16 @@ export class HabitsService {
     };
   }
 
-  private async validateChildRole(user: User) {
+  private validateChildRole(user: User) {
     if (user.role !== 'child') {
       throw new BadRequestException('Only children can perform this action');
     }
   }
 
-  private async validateHabitAssignment(habitId: string, userId: Types.ObjectId) {
+  private async validateHabitAssignment(
+    habitId: string,
+    userId: Types.ObjectId,
+  ) {
     const assignment = await this.userHabitModel.findOne({
       habitId: new Types.ObjectId(habitId),
       userId,
@@ -389,7 +443,9 @@ export class HabitsService {
     });
 
     if (!assignment) {
-      throw new BadRequestException('Habit is not assigned to you or is not active');
+      throw new BadRequestException(
+        'Habit is not assigned to you or is not active',
+      );
     }
 
     return assignment;
@@ -397,8 +453,10 @@ export class HabitsService {
 
   private async validateSchedule(habitId: string) {
     const today = new Date();
-    const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][today.getDay()];
-    
+    const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
+      today.getDay()
+    ];
+
     const schedule = await this.habitScheduleModel.findOne({
       habitId: new Types.ObjectId(habitId),
       dayOfWeek,
@@ -428,9 +486,13 @@ export class HabitsService {
     }
   }
 
-  async completeHabit(habitId: string, uid: string, completeHabitDto: CompleteHabitDto) {
+  async completeHabit(
+    habitId: string,
+    uid: string,
+    completeHabitDto: CompleteHabitDto,
+  ) {
     const child = await this.validateFamilyMembership(uid);
-    await this.validateChildRole(child);
+    this.validateChildRole(child);
 
     // Get the habit and validate it exists
     const habit = await this.habitModel.findById(new Types.ObjectId(habitId));
@@ -439,7 +501,10 @@ export class HabitsService {
     }
 
     // Validate the assignment
-    const assignment = await this.validateHabitAssignment(habitId, child._id as Types.ObjectId);
+    const assignment = await this.validateHabitAssignment(
+      habitId,
+      child._id as Types.ObjectId,
+    );
 
     // Validate the schedule
     await this.validateSchedule(habitId);
@@ -449,7 +514,7 @@ export class HabitsService {
     // Create completion record
     const completion = await this.habitCompletionModel.create({
       userHabitId: assignment._id,
-      note: completeHabitDto.note,
+      note: completeHabitDto?.note,
     });
 
     // Update child's points
@@ -470,7 +535,7 @@ export class HabitsService {
 
   async getCompletions(habitId: string, uid: string) {
     const user = await this.validateFamilyMembership(uid);
-    
+
     // Get the assignment
     const assignment = await this.userHabitModel.findOne({
       habitId: new Types.ObjectId(habitId),
@@ -482,10 +547,12 @@ export class HabitsService {
     }
 
     // Get completions
-    const completions = await this.habitCompletionModel.find({
-      userHabitId: assignment._id,
-    }).sort({ completedAt: -1 });
+    const completions = await this.habitCompletionModel
+      .find({
+        userHabitId: assignment._id,
+      })
+      .sort({ completedAt: -1 });
 
     return completions;
   }
-} 
+}

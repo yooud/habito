@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+  Query,
+} from '@nestjs/common';
 import { HabitsService } from './habits.service';
 import { CreateHabitDto } from './dto/create-habit.dto';
 import { AssignHabitDto } from './dto/assign-habit.dto';
@@ -81,4 +92,4 @@ export class HabitsController {
   getCompletions(@Req() req: RequestWithUser, @Param('id') id: string) {
     return this.habitsService.getCompletions(id, req.user.uid);
   }
-} 
+}

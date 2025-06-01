@@ -5,4 +5,4 @@ export class CreateFamilyDto {
   @IsNotEmpty()
   @MinLength(2)
   name: string;
-} 
+}

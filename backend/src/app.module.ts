@@ -6,6 +6,7 @@ import { FirebaseAuthModule } from './firebase/firebase-admin.module';
 import { AuthModule } from './auth/auth.module';
 import { FamilyModule } from './family/family.module';
 import { HabitsModule } from './habits/habits.module';
+import { RewardsModule } from './rewards/rewards.module';
 import { config } from 'dotenv';
 
 config();
@@ -13,10 +14,14 @@ config();
 @Module({
   imports: [
     FirebaseAuthModule,
-    MongooseModule.forRoot(process.env.MONGODB_URI || 'mongodb://habito:otibah@localhost:27017/habito?authSource=admin'),
+    MongooseModule.forRoot(
+      process.env.MONGODB_URI ||
+        'mongodb://habito:otibah@localhost:27017/habito?authSource=admin',
+    ),
     AuthModule,
     FamilyModule,
     HabitsModule,
+    RewardsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

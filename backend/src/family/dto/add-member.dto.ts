@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsEnum } from 'class-validator';
+import { IsEmail, IsEnum } from 'class-validator';
 
 export enum UserRole {
   PARENT = 'parent',
@@ -11,4 +11,4 @@ export class AddMemberDto {
 
   @IsEnum(UserRole)
   role: UserRole;
-} 
+}
