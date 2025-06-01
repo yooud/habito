@@ -62,7 +62,7 @@ export class RewardsService {
       throw new NotFoundException('User not found or not in a family');
     }
     if (user.role !== UserRole.CHILD) {
-      throw new BadRequestException('Only a child can purchase rewards');
+      throw new BadRequestException('Only a child can redeem rewards');
     }
     let rewardObjectId: Types.ObjectId;
     try {
@@ -76,7 +76,7 @@ export class RewardsService {
     }
     if (!reward.familyId.equals(user.familyId)) {
       throw new BadRequestException(
-        'Cannot purchase a reward from another family',
+        'Cannot redeem a reward from another family',
       );
     }
 
@@ -90,7 +90,7 @@ export class RewardsService {
     const userReward = await this.userRewardModel.create({
       userId: user._id,
       rewardId: rewardObjectId,
-      purchasedAt: new Date(),
+      redeemedAt: new Date(),
     });
     return userReward;
   }
@@ -101,7 +101,7 @@ export class RewardsService {
       throw new NotFoundException('User not found or not in a family');
     }
     if (user.role !== UserRole.PARENT) {
-      throw new BadRequestException('Only a parent can view purchased rewards');
+      throw new BadRequestException('Only a parent can view redeemed rewards');
     }
     const familyId = user.familyId;
     const members = await this.userModel
@@ -115,7 +115,6 @@ export class RewardsService {
       .populate<{ userId: User }>('userId')
       .lean();
     const result = purchased.map((pr) => ({
-      redeemedAt: pr.redeemedAt,
       user: {
         id: pr.userId._id,
         uid: pr.userId.uid,
@@ -128,6 +127,7 @@ export class RewardsService {
         title: pr.rewardId.title,
         description: pr.rewardId.description,
         pointsRequired: pr.rewardId.pointsRequired,
+        redeemedAt: pr.redeemedAt,
       },
     }));
     return result;
