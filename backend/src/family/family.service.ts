@@ -158,6 +158,7 @@ export class FamilyService {
         email: member.email,
         name: member.name,
         role: member.role,
+        points: member.points,
       })),
     };
   }
