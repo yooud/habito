@@ -5,6 +5,7 @@ import { Family } from '../schemas/family.schema';
 import { User } from '../schemas/user.schema';
 import { CreateFamilyDto } from './dto/create-family.dto';
 import { AddMemberDto } from './dto/add-member.dto';
+import { UpdateMemberDto } from './dto/update-member.dto';
 
 @Injectable()
 export class FamilyService {
@@ -57,6 +58,51 @@ export class FamilyService {
     await this.userModel.findByIdAndUpdate(user._id, {
       familyId: familyObjectId,
       role: addMemberDto.role,
+    });
+
+    return this.getFamilyWithMembers(familyId);
+  }
+
+  async updateMember(
+    familyId: string,
+    memberId: string,
+    updateDto: UpdateMemberDto,
+  ) {
+    const familyObjectId = new Types.ObjectId(familyId);
+    const family = await this.familyModel.findById(familyObjectId);
+    if (!family) {
+      throw new NotFoundException('Family not found');
+    }
+
+    let memberObjectId: Types.ObjectId;
+    try {
+      memberObjectId = new Types.ObjectId(memberId);
+    } catch {
+      throw new BadRequestException('Invalid memberId format');
+    }
+
+    const member = await this.userModel.findOne({
+      _id: memberObjectId,
+      familyId: familyObjectId,
+    });
+    if (!member) {
+      throw new NotFoundException('User not found in this family');
+    }
+
+    const updateData: Partial<Pick<User, 'name' | 'role'>> = {};
+    if (updateDto.name !== undefined) {
+      updateData.name = updateDto.name;
+    }
+    if (updateDto.role !== undefined) {
+      updateData.role = updateDto.role;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
+    await this.userModel.findByIdAndUpdate(memberObjectId, {
+      $set: updateData,
     });
 
     return this.getFamilyWithMembers(familyId);

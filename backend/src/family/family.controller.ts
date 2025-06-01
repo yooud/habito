@@ -1,9 +1,22 @@
-import { Controller, Get, Post, Delete, UseGuards, Req, Body, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  UseGuards,
+  Req,
+  Body,
+  Param,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { FamilyService } from './family.service';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { RequestWithUser } from '../auth/types/request.types';
 import { CreateFamilyDto } from './dto/create-family.dto';
 import { AddMemberDto } from './dto/add-member.dto';
+import { UpdateMemberDto } from './dto/update-member.dto';
 
 @Controller('family')
 @UseGuards(FirebaseAuthGuard)
@@ -48,6 +61,28 @@ export class FamilyController {
     }
 
     return this.familyService.addMember(user.familyId.toString(), addMemberDto);
+  }
+
+  @Patch('members/:memberId')
+  async updateMember(
+    @Req() req: RequestWithUser,
+    @Param('memberId') memberId: string,
+    @Body() updateDto: UpdateMemberDto,
+  ) {
+    const user = await this.familyService.getUserByUid(req.user.uid);
+    if (!user || !user.familyId) {
+      throw new NotFoundException('User is not associated with any family');
+    }
+
+    if (user.role !== 'parent') {
+      throw new BadRequestException('Only parents can edit family members');
+    }
+
+    return this.familyService.updateMember(
+      user.familyId.toString(),
+      memberId,
+      updateDto,
+    );
   }
 
   @Delete()
