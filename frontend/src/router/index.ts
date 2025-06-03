@@ -6,6 +6,7 @@ import {
 import { auth } from "@/firebase";
 import { useAuthStore } from "@/store/authStore";
 import type { User } from "firebase/auth";
+import { useFamilyStore } from "@/store/familyStore";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -42,11 +43,13 @@ const router = createRouter({
 
 router.beforeEach(async (to, _, next) => {
   const authStore = useAuthStore();
+  const familyStore = useFamilyStore();
 
   const user = await new Promise((resolve) => auth.onAuthStateChanged(resolve));
   authStore.user = user as User;
+  const family = await familyStore.fetchFamily();
 
-  if (to.meta.requiresAuth && !user) {
+  if (to.meta.requiresAuth && (!user || !family)) {
     next("/auth");
   } else if (to.meta.guestOnly && user) {
     next("/");
