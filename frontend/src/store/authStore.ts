@@ -9,6 +9,8 @@ import {
   type User
 } from "firebase/auth";
 import { jwtDecode } from "jwt-decode";
+import { login } from "@/services/authService";
+import api from "@/api";
 
 export interface DecodedToken {
   id?: number;
@@ -24,37 +26,39 @@ export const useAuthStore = defineStore("auth", {
   }),
 
   actions: {
-    async register(email: string, password: string, name: string): Promise<void> {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      if (userCredential.user) {
-        await updateProfile(userCredential.user, { displayName: name });
-        this.user = userCredential.user;
+    async register(email: string, password: string, name: string): Promise<boolean> {
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        if (userCredential.user) {
+          await updateProfile(userCredential.user, { displayName: name });
+          this.user = userCredential.user;
 
-        const token = await getIdToken(userCredential.user, true);
-        this.setToken(token);
-        await this.registerInApi(token);
+          const token = await getIdToken(userCredential.user, true);
+          this.setToken(token);
+          await this.registerInApi(token);
+        }
+        return true;
+      } catch (error) {
+        console.error("Regitration error:", error);
+        return false;
       }
     },
 
-    async login(email: string, password: string): Promise<void> {
+    async login(email: string, password: string): Promise<boolean> {
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         this.user = userCredential.user;
 
         const token = await getIdToken(userCredential.user);
         this.setToken(token);
-
-        const decoded = decodeToken(token);
-        if (!decoded?.id) {
-          console.log("User not registered in API, registering...");
-          await this.registerInApi(token);
-        }
+        return true;
       } catch (error) {
         console.error("Login error:", error);
+        return false;
       }
     },
 
-    async loginWithGoogle() {
+    async loginWithGoogle(): Promise<boolean> {
       try {
         const user = await signInWithGoogle();
         if (user !== null) {
@@ -63,22 +67,18 @@ export const useAuthStore = defineStore("auth", {
           const token = await getIdToken(user);
           this.setToken(token);
 
-          const decoded = decodeToken(token);
-          if (!decoded?.id) {
-            await this.registerInApi(token);
-          }
+          await this.registerInApi(token);
         }
+        return true;
       } catch (error) {
         console.error("Google login error:", error);
+        return false;
       }
     },
 
     async registerInApi(token: string) {
       try {
-        // TODO: register in API
-
-        const newToken = await getIdToken(this.user as User, true);
-        this.setToken(newToken);
+        await login()
       } catch (error) {
         console.error("API registration error:", error);
       }
@@ -106,10 +106,10 @@ export const useAuthStore = defineStore("auth", {
       this.token = token;
       if (token) {
         localStorage.setItem("token", token);
-        // TODO: set token to API
+        api.defaults.headers.Authorization = `Bearer ${token}`;
       } else {
         localStorage.removeItem("token");
-        // TODO: remove token from API
+        delete api.defaults.headers.Authorization;
       }
     },
   },
