@@ -12,11 +12,16 @@ const routes: RouteRecordRaw[] = [
     path: "/",
     component: () => import("@/pages/Home.vue")
   },
-  // {
-  //   path: "/login",
-  //   component: () => import("@/pages/Login.vue"),
-  //   meta: { guestOnly: true }
-  // },
+  {
+    path: "/auth",
+    component: () => import("@/pages/Auth.vue"),
+    meta: { guestOnly: true }
+  },
+  {
+    name: "dashboard",
+    path: "/dashboard",
+    component: () => import("@/pages/Home.vue"),
+  }
   // {
   //   path: "/register",
   //   component: () => import("@/pages/Register.vue"),
@@ -42,7 +47,7 @@ router.beforeEach(async (to, _, next) => {
   authStore.user = user as User;
 
   if (to.meta.requiresAuth && !user) {
-    next("/login");
+    next("/auth");
   } else if (to.meta.guestOnly && user) {
     next("/");
   } else {

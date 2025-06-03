@@ -1,5 +1,20 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import Button from 'primevue/button'
+
+import { useAuthStore } from '@/store/authStore'
+import {  useToast } from 'primevue'
+
+const authStore = useAuthStore()
+const toast = useToast()
+
+const logout = () => {
+  authStore.logout()
+}
+
+const sendToast = () => {
+  toast.add({ severity: 'info', summary: 'Info', detail: 'Message Content', life: 3000 });
+}
 
 defineProps<{ msg: string }>()
 
@@ -32,6 +47,9 @@ const count = ref(0)
     >.
   </p>
   <p class="read-the-docs">Click on the Vite and Vue logos to learn more</p>
+
+  <Button label="Logout" @click="logout" class="p-button-raised p-button-rounded p-button-success" />
+  <Button label="Toast" @click="sendToast" class="p-button-raised p-button-rounded p-button-info" />
 </template>
 
 <style scoped>
