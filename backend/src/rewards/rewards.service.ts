@@ -42,6 +42,7 @@ export class RewardsService {
       title: createDto.title,
       description: createDto.description,
       pointsRequired: createDto.pointsRequired,
+      emoji: createDto.emoji,
     });
     return reward;
   }
@@ -100,36 +101,23 @@ export class RewardsService {
     if (!user || !user.familyId) {
       throw new NotFoundException('User not found or not in a family');
     }
-    if (user.role !== UserRole.PARENT) {
-      throw new BadRequestException('Only a parent can view redeemed rewards');
-    }
-    const familyId = user.familyId;
-    const members = await this.userModel
-      .find({ familyId })
-      .select('_id role')
-      .lean();
-    const memberIds = members.map((m) => m._id);
+
     const purchased = await this.userRewardModel
-      .find({ userId: { $in: memberIds } })
+      .find({ userId: user._id })
       .populate<{ rewardId: Reward }>('rewardId')
-      .populate<{ userId: User }>('userId')
       .lean();
-    const result = purchased.map((pr) => ({
-      user: {
-        id: pr.userId._id,
-        uid: pr.userId.uid,
-        email: pr.userId.email,
-        name: pr.userId.name,
-        role: pr.userId.role,
-      },
+
+    const result = purchased.map(pr => ({
       reward: {
         id: pr.rewardId._id,
         title: pr.rewardId.title,
         description: pr.rewardId.description,
         pointsRequired: pr.rewardId.pointsRequired,
-        redeemedAt: pr.redeemedAt,
       },
+      redeemedAt: pr.purchasedAt,
     }));
+
     return result;
   }
+
 }

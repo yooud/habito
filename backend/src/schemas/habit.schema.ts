@@ -14,6 +14,9 @@ export class Habit extends Document {
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   createdBy: Types.ObjectId;
+
+  @Prop({ default: '🏆' })
+  emoji: string;
 }
 
 export const HabitSchema = SchemaFactory.createForClass(Habit);

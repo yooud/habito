@@ -85,6 +85,7 @@ export class HabitsService {
       description: createHabitDto.description,
       points: createHabitDto.points,
       createdBy: user._id,
+      emoji: createHabitDto.emoji, 
     });
 
     const schedulePromises = createHabitDto.schedule.map((dayOfWeek) =>
@@ -233,6 +234,7 @@ export class HabitsService {
         title: updateHabitDto.title,
         description: updateHabitDto.description,
         points: updateHabitDto.points,
+        emoji: updateHabitDto.emoji,
       },
       { new: true },
     );

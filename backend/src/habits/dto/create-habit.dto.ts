@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsArray,
   IsEnum,
+  MaxLength 
 } from 'class-validator';
 
 export enum DayOfWeek {
@@ -30,4 +31,9 @@ export class CreateHabitDto {
   @IsArray()
   @IsEnum(DayOfWeek, { each: true })
   schedule: DayOfWeek[];
+
+  @IsOptional()
+  @IsString({ message: 'emoji must be a string' })
+  @MaxLength(2, { message: 'emoji must consist of one character' })
+  emoji?: string;
 }
