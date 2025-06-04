@@ -114,7 +114,7 @@ export class RewardsService {
         description: pr.rewardId.description,
         pointsRequired: pr.rewardId.pointsRequired,
       },
-      redeemedAt: pr.purchasedAt,
+      redeemedAt: pr.redeemedAt,
     }));
 
     return result;
