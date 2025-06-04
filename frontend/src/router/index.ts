@@ -15,6 +15,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/auth",
+    name: "auth",
     component: () => import("@/pages/Auth.vue"),
     meta: { guestOnly: true }
   },
