@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue';
-import { FamilyMember, FamilyResponse } from '@/types/family';
-import { Plus, Check, Star, Target } from 'lucide-vue-next';
+import { FamilyMember } from '@/types/family';
+import { Gift, ShoppingCart, Star } from 'lucide-vue-next';
 import Card from 'primevue/card';
 import { useFamilyStore } from '@/store/familyStore';
 import { useAuthStore } from '@/store/authStore';
@@ -20,7 +20,7 @@ const familyMembers = ref<FamilyMember[]>([]);
 const currentUser = computed<FamilyMember>(() => familyMembers.value.find(member => member.uid === authStore.user.uid));
 const isParent = computed(() => currentUser.value?.role === 'parent');
 const createRewardDialog = ref(false);
-const updateRewardDialog = ref(false);
+const updateRewardDialog = ref<Record<string, boolean>>({});
 const rewards = ref<Reward[]>([]);
 const availableRewards = computed(() => rewards.value.filter(reward => !redeemedRewards.value.some(r => r.id === reward._id)));
 const redeemedRewards = ref<Reward[]>([]);
@@ -45,6 +45,10 @@ const updateRewards = async () => {
         redeemedRewards.value = (redeemedResponse as RedeemedReward[]).map(reward => reward.reward);
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load rewards.' });
+    }
+
+    for (const reward in rewards.value) {
+        updateRewardDialog[reward.id] = false;
     }
 };
 
@@ -121,7 +125,10 @@ onMounted(async () => {
             <create-reward-dialog v-model="createRewardDialog" @added="updateRewards" />
         </div>
         <div class="w-full">
-            <span class="text-2xl font-bold text-gray-800">Available Rewards</span>
+            <span class="text-2xl font-bold text-gray-800 flex items-center mb-6">
+                <Gift class="mr-3 text-purple-500" :size=28 />
+                Available Rewards
+            </span>
             <Card v-if="availableRewards.length === 0" class="text-center border-0 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50">
                 <template #content>
                     <div class="text-6xl mb-4">🎁</div>
@@ -148,10 +155,10 @@ onMounted(async () => {
                                     <span class="font-bold">{{ reward.pointsRequired }} points</span>
                                 </div>
                                 <div v-if="isParent" class="flex flex-row items-center gap-1">
-                                    <Button icon="pi pi-pencil" variant="text" rounded @click="updateRewardDialog = true" />
+                                    <Button icon="pi pi-pencil" variant="text" rounded @click="updateRewardDialog[reward.id] = true" />
                                     <Button icon="pi pi-trash" variant="text" rounded @click="remove(reward)" />
 
-                                    <update-reward-dialog v-model="updateRewardDialog" :reward="reward" @updated="updateRewards" />
+                                    <update-reward-dialog v-model="updateRewardDialog[reward.id]" :reward="reward" @updated="updateRewards" />
                                 </div>  
 
                                 <Button
@@ -170,7 +177,10 @@ onMounted(async () => {
             </div>
         </div>
         <div class="w-full" v-if="!isParent && redeemedRewards.length > 0">
-            <span class="text-2xl font-bold text-gray-800">Redeemed Rewards</span>
+            <span class="text-2xl font-bold text-gray-800 flex items-center mb-6">
+                <ShoppingCart class="mr-3 text-green-500" :size=28 />
+                Redeemed Rewards
+            </span>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <Card v-for="reward in redeemedRewards" :key="reward._id" class="border-0 shadow-lg rounded-2xl bg-gradient-to-br from-green-300 to-green-500">
                     <template #content>

@@ -10,8 +10,8 @@ const views = [{
     name: '🏠 Dashboard',
     value: 'dashboard'
     }, {
-    name: '👤 Profile',
-    value: 'profile'
+    name: '👤 Family',
+    value: 'family'
     }, {
     name: '🏆 Rewards',
     value: 'rewards'
