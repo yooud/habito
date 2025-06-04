@@ -68,5 +68,8 @@ export interface CompleteHabitResponse {
 export interface HabitCompletionResponse {
   _id: string;
   userHabitId: string;
-  completedAt: Date;
+  completedAt: string;
+  user: {
+	id: string;
+  }
 }

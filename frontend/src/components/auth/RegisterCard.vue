@@ -18,7 +18,7 @@ const isLoading = ref(false);
 const authStore = useAuthStore();
 const toast = useToast();
 
-const emit = defineEmits(['onLoginClick']);
+const emit = defineEmits(['onLoginClick', 'onSuccess']);
 
 const resolver = ({ values }: FormResolverOptions) => {
   const errors: Record<string, Record<string, string>[]> = {
@@ -68,7 +68,7 @@ const register = async (values: Record<string, any>): Promise<boolean> => {
       toast.add({ severity: 'error', summary: 'Error', detail: 'Email already exists', life: 3000 });
       return false;
     }
-    await router.push({name: 'dashboard'})
+    emit('onSuccess')
     return true;
   } catch (error) {
     console.error("Registration error:", error);
@@ -85,7 +85,7 @@ const handleGoogleLogin = async () => {
       toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to login with Google', life: 3000 });
       return;
     }
-    await router.push("/");
+    emit('onSuccess')
   } catch (error) {
     console.error("Error logging in with Google:", error);
     toast.add({ severity: 'error', summary: 'Error', detail: 'There was an error signing in with Google', life: 3000 });

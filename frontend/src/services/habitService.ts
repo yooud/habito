@@ -71,7 +71,7 @@ export const assignHabit = async (id: string, data: AssignHabitRequest): Promise
   }
 }
 
-export const getMyHabits = async (): Promise<HabitResponse> => {
+export const getMyHabits = async (): Promise<HabitResponse[]> => {
   try {
     const response = await api.get('/habits/assigned/me');
     return response.data;
@@ -102,7 +102,7 @@ export const removeAssignedHabit = async (id: string): Promise<void | Error> => 
 
 export const completeHabit = async (id: string): Promise<CompleteHabitResponse | Error> => {
   try {
-    const response = await api.post(`/habits/assigned/${id}`);
+    const response = await api.post(`/habits/${id}/complete`);
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError)
@@ -110,9 +110,9 @@ export const completeHabit = async (id: string): Promise<CompleteHabitResponse |
   }
 }
 
-export const getHabitCompletions = async (id: string): Promise<HabitCompletionResponse | Error> => {
+export const getHabitCompletions = async (id: string): Promise<HabitCompletionResponse[] | Error> => {
   try {
-    const response = await api.post(`/habits/${id}/completions`);
+    const response = await api.get(`/habits/${id}/completions`);
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError)

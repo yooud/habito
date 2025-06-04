@@ -1,10 +1,39 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import LoginCard from '@/components/auth/LoginCard.vue'
 import RegisterCard from '@/components/auth/RegisterCard.vue'
+import CreateFamilyCard from '@/components/family/CreateFamilyCard.vue'
 import { Sparkles, Star, Trophy, Heart } from 'lucide-vue-next';
+import { useRouter } from 'vue-router';
+import { useFamilyStore } from '@/store/familyStore';
+import { useAuthStore } from '@/store/authStore';
 
-const selectedTab = ref('login')
+const router = useRouter();
+const authStore = useAuthStore();
+const familyStore = useFamilyStore();
+const selectedTab = ref<'login' | 'register' | 'family'>('login');
+
+const onSuccess = async () => {
+  const family = await familyStore.fetchFamily();
+  console.log('Family fetched:', family);
+  if (!family) {
+    selectedTab.value = 'family';
+  } else {
+    await router.push({name: 'dashboard'});
+  }
+}
+
+onMounted(async () => {
+  document.title = 'Habito - Login';
+  if (authStore.user) {
+    const family = await familyStore.fetchFamily();
+    if (!family) {
+      selectedTab.value = 'family';
+    } else {
+      router.push({ name: 'dashboard' });
+    }
+  }
+});
 </script>
 
 <template>
@@ -24,7 +53,8 @@ const selectedTab = ref('login')
       </div>
     </div>
 
-    <LoginCard v-if="selectedTab === 'login'" @onRegisterClick="selectedTab = 'register'" />
-    <RegisterCard v-else-if="selectedTab === 'register'" @onLoginClick="selectedTab = 'login'" />
+    <LoginCard v-if="selectedTab === 'login'" @onRegisterClick="selectedTab = 'register'" @onSuccess="onSuccess" />
+    <RegisterCard v-else-if="selectedTab === 'register'" @onLoginClick="selectedTab = 'login'" @onSuccess="onSuccess" />
+    <CreateFamilyCard v-else-if="selectedTab === 'family'" />
   </div>
 </template>
