@@ -140,7 +140,7 @@ onMounted(async () => {
 
 <template>
     <div class="flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
-        <div v-if="currentUser && currentUser.role === 'child'" class="w-full grid grid-cols-1 mb-8 md:grid-cols-3 gap-6">
+        <div v-if="!isParent" class="w-full grid grid-cols-1 mb-8 md:grid-cols-3 gap-6">
             <Card 
                 v-for="card in cards" 
                 key="card.title" 
@@ -177,8 +177,13 @@ onMounted(async () => {
                 <template #content>
                     <div class="flex items-center justify-between">
                         <div class="w-full">
-                            <p class="font-bold text-lg text-gray-800" >{{ habit.title }}</p>
-                            <p class="text-sm text-gray-600">{{ habit.description }}</p>
+                            <div class="flex items">
+                                <span class="text-3xl">{{ habit.emoji }}</span>
+                                <div class="flex flex-col ml-2">
+                                    <p class="font-bold text-lg text-gray-800" >{{ habit.title }}</p>
+                                    <p class="text-sm text-gray-600">{{ habit.description }}</p>
+                                </div>  
+                            </div>
                             <div class="flex items-center gap-2 mt-2 justify-between">
                                 <div 
                                     class="flex flex-row items-center gap-1"

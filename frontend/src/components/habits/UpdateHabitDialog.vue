@@ -24,6 +24,7 @@ const initialValues = ref({
   points: 5,
   schedule: [] as string[],
   assignTo: [] as FamilyMember[],
+  emoji: "🏆",
 });
 
 const props = defineProps<{
@@ -115,6 +116,7 @@ const update = async (values: Record<string, any>): Promise<boolean> => {
       description: values.description.trim(),
       points: values.points,
       schedule: values.schedule,
+      emoji: values.emoji?.trim() || '🏆'
     })) as Habit;
 
     if (values.assignTo && values.assignTo.length > 0) {
@@ -169,6 +171,7 @@ onMounted(() => {
     points: props.habit.points,
     schedule: props.habit.schedule,
     assignTo: props.members.filter(m => props.habit.assignedTo.some(a => m.uid === a.uid)).map(m => m.id),
+    emoji: props.habit.emoji || "🏆",
   };
 });
 </script>
@@ -190,14 +193,26 @@ onMounted(() => {
     >
       <div class="flex flex-col gap-1">
         <label for="name" class="font-medium text-sm">Name</label>
-        <InputText
-          name="name"
-          type="text"
-          placeholder="Name"
-          fluid
-          class="rounded-xl"
-          :invalid="$form.name?.invalid"
-        />
+        <div class="flex flex-row items-center gap-2">
+          <InputText
+            name="emoji"
+            type="text"
+            fluid
+            class="rounded-xl w-12"
+            placeholder="😀"
+            maxlength="2"
+            v-keyfilter="/^\p{Emoji}+$/u"
+            :invalid="$form.name?.invalid"
+          />
+          <InputText
+            name="name"
+            type="text"
+            placeholder="Name"
+            fluid
+            class="rounded-xl"
+            :invalid="$form.name?.invalid"
+          />
+        </div>
         <Message
           v-if="$form.name?.invalid"
           severity="error"

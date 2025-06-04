@@ -13,6 +13,7 @@ export interface CreateHabitRequest {
 	description: string;
 	points: number;
 	schedule: SCHEDULE_DAYS[];
+	emoji: string;
 }
 
 export interface Habit {
@@ -22,6 +23,7 @@ export interface Habit {
 	points: number;
 	createdBy: string;
 	schedule: SCHEDULE_DAYS[];
+	emoji: string;
 	assignedTo: {
 		uid: string;
 		name: string;

@@ -67,9 +67,12 @@ const formattedCompletions = computed(() =>
     :closable="true"
   >
     <div class="flex flex-col gap-4">
-      <div>
-        <div class="font-bold text-xl mb-1">{{ props.habit.title }}</div>
-        <div class="text-sm text-gray-600">{{ props.habit.description }}</div>
+      <div class="flex items">
+          <span class="text-3xl">{{ habit.emoji }}</span>
+          <div class="flex flex-col ml-2">
+              <p class="font-bold text-lg text-gray-800" >{{ habit.title }}</p>
+              <p class="text-sm text-gray-600">{{ habit.description }}</p>
+          </div>  
       </div>
 
       <div v-if="!completions.length" class="mt-4">
