@@ -120,7 +120,7 @@ onMounted(async () => {
                 </template>  
             </Card>
         </div>
-        <div v-else class="w-full max-w-2xl flex flex-col items-center">
+        <div v-else class="w-full max-w-2xl flex flex-col items-center mb-6">
             <Button label="Add new reward" icon="pi pi-plus" class="rounded-2xl w-64" @click="createRewardDialog = true" />
             <create-reward-dialog v-model="createRewardDialog" @added="updateRewards" />
         </div>

@@ -1,9 +1,13 @@
 <script lang="ts" setup>
-import router from '@/router';
 import Button from 'primevue/button';
 import { Sparkles } from 'lucide-vue-next';
 
 import { ref } from 'vue';
+import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'vue-router';
+
+const authStore = useAuthStore();
+const router = useRouter();
 
 const currentView = ref('dashboard');
 const views = [{
@@ -16,6 +20,11 @@ const views = [{
     name: '🏆 Rewards',
     value: 'rewards'
 }];
+
+const logout = async () => {
+    await authStore.logout();
+    await router.push({ name: 'auth' });
+};
 
 const changeView = (view: string) => {
     currentView.value = view;
@@ -44,6 +53,7 @@ const changeView = (view: string) => {
                 class="rounded-xl font-medium"
                 :label=view.name
               />
+              <Button @click="logout" variant="text" icon="pi pi-sign-out" severity="help"  />
             </nav>
           </div>
         </div>

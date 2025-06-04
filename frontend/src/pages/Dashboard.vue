@@ -171,7 +171,7 @@ onMounted(async () => {
                 </template>  
             </Card>
         </div>
-        <div v-else class="w-full max-w-2xl flex flex-col items-center">
+        <div v-else class="w-full max-w-2xl flex flex-col items-center mb-6">
             <Button label="Add new habit" icon="pi pi-plus" class="rounded-2xl w-64" @click="createHabitDialog = true" />
             <create-habit-dialog v-model="createHabitDialog" :members="familyMembers" @added="updateHabits" />
         </div>
