@@ -7,6 +7,7 @@ import { definePreset } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 import { ConfirmationService, Ripple, ToastService } from 'primevue';
 import router from './router';
+import KeyFilter from 'primevue/keyfilter';
 
 const MyPreset = definePreset(Aura, {
     semantic: {
@@ -44,6 +45,7 @@ app.use(PrimeVue, {
     ripple: true
 });
 app.directive('ripple', Ripple);
+app.directive('keyfilter', KeyFilter);
 app.use(ToastService);
 app.use(ConfirmationService);
 

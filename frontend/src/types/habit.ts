@@ -13,15 +13,18 @@ export interface CreateHabitRequest {
 	description: string;
 	points: number;
 	schedule: SCHEDULE_DAYS[];
+	emoji: string;
 }
 
 export interface Habit {
-	_id: string;
+	_id?: string;
+	id?: string;
 	title: string;
 	description: string;
 	points: number;
 	createdBy: string;
 	schedule: SCHEDULE_DAYS[];
+	emoji: string;
 	assignedTo: {
 		uid: string;
 		name: string;
@@ -48,7 +51,7 @@ export interface AssignHabitResponse {
 export interface HabitResponse {
 	id: string;
   isActive: boolean;
-  habit: Habit
+  habit: Habit;
 }
 
 export interface UpdateAssignedHabitRequest {

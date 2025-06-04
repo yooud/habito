@@ -362,6 +362,7 @@ export class HabitsService {
             title: assignment.habitId.title,
             description: assignment.habitId.description,
             points: assignment.habitId.points,
+            emoji: assignment.habitId.emoji,
             createdBy: assignment.habitId.createdBy,
             schedule: schedule.map((s) => s.dayOfWeek),
           },

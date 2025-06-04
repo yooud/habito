@@ -9,7 +9,7 @@ import Button from 'primevue/button';
 import CreateHabitDialog from '@/components/habits/CreateHabitDialog.vue';
 import UpdateHabitDialog from '@/components/habits/UpdateHabitDialog.vue';
 import HistoryHabitDialog from '@/components/habits/HistoryHabitDialog.vue';
-import { CompleteHabitResponse, Habit, HabitCompletionResponse } from '@/types/habit';
+import { CompleteHabitResponse, Habit, HabitCompletionResponse, SCHEDULE_DAYS } from '@/types/habit';
 import { completeHabit, getHabitCompletions, getHabits, getMyHabits, removeHabit } from '@/services/habitService';
 import { useToast } from 'primevue';
 
@@ -23,7 +23,7 @@ const createHabitDialog = ref(false);
 const updateHabitDialog = ref(false);
 const historyHabitDialog = ref(false);
 const habits = ref<Habit[]>([]);
-const completitions = ref<Record<string, HabitCompletionResponse[]>>({});
+const completions = ref<Record<string, HabitCompletionResponse[]>>({});
 
 const cards = ref([
     {
@@ -70,12 +70,12 @@ const updateHabits = async () => {
                 console.error(completitionResponse.error);
                 continue;
             }
-            completitions.value[habit._id] = completitionResponse as HabitCompletionResponse[];
+            completions.value[habit.id] = completitionResponse as HabitCompletionResponse[];
         }
     }
 
     cards.value[0].value = currentUser.value?.points || 0;
-    cards.value[1].value = habits.value.filter(habit => isCompleted(habit._id)).length;
+    cards.value[1].value = habits.value.filter(habit => isCompleted(habit.id)).length;
     cards.value[2].value = habits.value.length;
 };
 
@@ -97,7 +97,7 @@ const remove = async (habit: Habit) => {
             life: 3000
         });
         habits.value = habits.value.filter(h => h._id !== habit._id);
-        delete completitions.value[habit._id];
+        delete completions.value[habit._id];
     }
 };
 
@@ -107,7 +107,7 @@ const complete = async (habit: Habit) => {
         toast.add({
             severity: 'error',
             summary: 'Error',
-            detail: 'Failed to complete habit',
+            detail: response.message,
             life: 3000
         });
         return;
@@ -118,8 +118,8 @@ const complete = async (habit: Habit) => {
 }
 
 const isCompleted = (habitId: string): boolean => {
-    if (!completitions.value[habitId]) return false;
-    return completitions.value[habitId].some(completion => isToday(new Date(completion.completedAt)));
+    if (!completions.value[habitId]) return false;
+    return completions.value[habitId].some(completion => isToday(new Date(completion.completedAt)));
 };
 
 const isToday = (date: Date): boolean =>  {  
@@ -129,6 +129,13 @@ const isToday = (date: Date): boolean =>  {
          date.getMonth() === now.getMonth() &&
          date.getFullYear() === now.getFullYear()
 }
+
+const isScheduledToday = (habit: Habit): boolean => {
+  const todayIndex = new Date().getDay();
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const todayName = dayNames[todayIndex];
+  return habit.schedule.includes(todayName as SCHEDULE_DAYS);
+};
 
 onMounted(async () => {
     document.title = 'Dashboard';
@@ -140,7 +147,7 @@ onMounted(async () => {
 
 <template>
     <div class="flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
-        <div v-if="currentUser && currentUser.role === 'child'" class="w-full grid grid-cols-1 mb-8 md:grid-cols-3 gap-6">
+        <div v-if="!isParent" class="w-full grid grid-cols-1 mb-8 md:grid-cols-3 gap-6">
             <Card 
                 v-for="card in cards" 
                 key="card.title" 
@@ -171,19 +178,24 @@ onMounted(async () => {
                 v-for="habit in habits" 
                 key="habit.title" 
                 class="text-white border-0 shadow-lg rounded-2xl transition-all duration-300 transform hover:scale-105"
-                :class="{ 'bg-gradient-to-br from-green-200 to-green-500 text-white': isCompleted(habit._id), 
-                          'bg-white hover:shadow-xl': !isCompleted(habit._id) }"
+                :class="{ 'bg-gradient-to-br from-green-200 to-green-500 text-white': isCompleted(habit.id), 
+                          'bg-white hover:shadow-xl': !isCompleted(habit.id) }"
             >
                 <template #content>
                     <div class="flex items-center justify-between">
                         <div class="w-full">
-                            <p class="font-bold text-lg text-gray-800" >{{ habit.title }}</p>
-                            <p class="text-sm text-gray-600">{{ habit.description }}</p>
+                            <div class="flex items">
+                                <span class="text-3xl">{{ habit.emoji }}</span>
+                                <div class="flex flex-col ml-2">
+                                    <p class="font-bold text-lg text-gray-800" >{{ habit.title }}</p>
+                                    <p class="text-sm text-gray-600">{{ habit.description }}</p>
+                                </div>  
+                            </div>
                             <div class="flex items-center gap-2 mt-2 justify-between">
                                 <div 
                                     class="flex flex-row items-center gap-1"
-                                    :class="{ 'text-green-50': isCompleted(habit._id), 
-                                              'text-yellow-600': !isCompleted(habit._id) }"
+                                    :class="{ 'text-green-50': isCompleted(habit.id), 
+                                              'text-yellow-600': !isCompleted(habit.id) }"
                                 >
                                     <Star :size="16" />
                                     <span class="text-sm">{{ habit.points }} points</span>
@@ -198,15 +210,15 @@ onMounted(async () => {
                                 </div>  
                                 <Button 
                                     v-else 
-                                    :label="isCompleted(habit._id) ? ' Done' : 'Mark Done'" 
+                                    :label="isCompleted(habit.id) ? ' Done' : 'Mark Done'" 
                                     variant="text"
                                     class="rounded-xl font-medium"
                                     :class="{
-                                        'bg-white text-green-600 hover:bg-gray-100': isCompleted(habit._id),
-                                        'bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white': !isCompleted(habit._id)
+                                        'bg-white text-green-600 hover:bg-gray-100': isCompleted(habit.id),
+                                        'bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white': !isCompleted(habit.id)
                                     }"
-                                    :disabled="isCompleted(habit._id)"
-                                    :icon="isCompleted(habit._id) ? 'pi pi-check' : ''"
+                                    :disabled="isCompleted(habit.id)"
+                                    :icon="isCompleted(habit.id) ? 'pi pi-check' : ''"
                                     @click="complete(habit)"
                                 />
                             </div>

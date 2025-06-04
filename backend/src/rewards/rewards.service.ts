@@ -113,11 +113,94 @@ export class RewardsService {
         title: pr.rewardId.title,
         description: pr.rewardId.description,
         pointsRequired: pr.rewardId.pointsRequired,
+        emoji: pr.rewardId.emoji,
       },
-      redeemedAt: pr.purchasedAt,
+      redeemedAt: pr.redeemedAt,
     }));
 
     return result;
+  }
+
+async updateReward(
+    uid: string,
+    rewardId: string,
+    updateDto: CreateRewardDto,
+  ) {
+    const user = await this.userModel.findOne({ uid });
+    if (!user || !user.familyId) {
+      throw new NotFoundException('User not found or not associated with a family');
+    }
+    if (user.role !== UserRole.PARENT) {
+      throw new BadRequestException('Only a parent can update rewards');
+    }
+
+    let rewardObjectId: Types.ObjectId;
+    try {
+      rewardObjectId = new Types.ObjectId(rewardId);
+    } catch {
+      throw new BadRequestException('Invalid rewardId format');
+    }
+    const reward = await this.rewardModel.findById(rewardObjectId);
+    if (!reward) {
+      throw new NotFoundException('Reward not found');
+    }
+
+    if (!reward.familyId.equals(user.familyId as Types.ObjectId)) {
+      throw new BadRequestException('Cannot update a reward from another family');
+    }
+
+    const updateData: Partial<Pick<Reward, 'title' | 'description' | 'pointsRequired' | 'emoji'>> = {};
+    if (updateDto.title !== undefined) {
+      updateData.title = updateDto.title;
+    }
+    if (updateDto.description !== undefined) {
+      updateData.description = updateDto.description;
+    }
+    if (updateDto.pointsRequired !== undefined) {
+      updateData.pointsRequired = updateDto.pointsRequired;
+    }
+    if (updateDto.emoji !== undefined) {
+      updateData.emoji = updateDto.emoji;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      throw new BadRequestException('No fields provided for update');
+    }
+
+    await this.rewardModel.findByIdAndUpdate(rewardObjectId, { $set: updateData });
+
+    return this.rewardModel.findById(rewardObjectId).lean();
+  }
+
+  async deleteReward(uid: string, rewardId: string) {
+    const user = await this.userModel.findOne({ uid });
+    if (!user || !user.familyId) {
+      throw new NotFoundException('User not found or not associated with a family');
+    }
+    if (user.role !== UserRole.PARENT) {
+      throw new BadRequestException('Only a parent can delete rewards');
+    }
+
+    let rewardObjectId: Types.ObjectId;
+    try {
+      rewardObjectId = new Types.ObjectId(rewardId);
+    } catch {
+      throw new BadRequestException('Invalid rewardId format');
+    }
+    const reward = await this.rewardModel.findById(rewardObjectId);
+    if (!reward) {
+      throw new NotFoundException('Reward not found');
+    }
+
+    if (!reward.familyId.equals(user.familyId as Types.ObjectId)) {
+      throw new BadRequestException('Cannot delete a reward from another family');
+    }
+
+    await this.userRewardModel.deleteMany({ rewardId: rewardObjectId });
+
+    await this.rewardModel.findByIdAndDelete(rewardObjectId);
+
+    return { message: 'Reward successfully deleted' };
   }
 
 }

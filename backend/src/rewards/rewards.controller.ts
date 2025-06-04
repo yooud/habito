@@ -4,6 +4,8 @@ import {
   Post,
   Body,
   Param,
+  Patch,
+  Delete,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -41,5 +43,22 @@ export class RewardsController {
   @Get('redeemed')
   async getRedeemed(@Req() req: RequestWithUser) {
     return this.rewardsService.getPurchasedRewards(req.user.uid);
+  }
+
+  @Patch(':rewardId')
+  async update(
+    @Req() req: RequestWithUser,
+    @Param('rewardId') rewardId: string,
+    @Body() updateDto: CreateRewardDto,
+  ) {
+    return this.rewardsService.updateReward(req.user.uid, rewardId, updateDto);
+  }
+
+  @Delete(':rewardId')
+  async remove(
+    @Req() req: RequestWithUser,
+    @Param('rewardId') rewardId: string,
+  ) {
+    return this.rewardsService.deleteReward(req.user.uid, rewardId);
   }
 }
