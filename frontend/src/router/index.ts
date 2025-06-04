@@ -19,9 +19,16 @@ const routes: RouteRecordRaw[] = [
     meta: { guestOnly: true }
   },
   {
-    name: "dashboard",
-    path: "/dashboard",
-    component: () => import("@/pages/Home.vue"),
+    path: "/",
+    component: () => import("@/layout/DashboardLayout.vue"),
+    meta: { requiresAuth: true },
+    children: [
+      {
+      path: "dashboard",
+      name: "dashboard",
+      component: () => import("@/pages/Dashboard.vue"),
+    }
+    ]
   }
   // {
   //   path: "/register",
