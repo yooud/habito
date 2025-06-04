@@ -24,23 +24,17 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
     children: [
       {
-      path: "dashboard",
-      name: "dashboard",
-      component: () => import("@/pages/Dashboard.vue"),
-    }
+        path: "dashboard",
+        name: "dashboard",
+        component: () => import("@/pages/Dashboard.vue"),
+      },
+      {
+        path: "rewards",
+        name: "rewards",
+        component: () => import("@/pages/Rewards.vue"),
+      }
     ]
   }
-  // {
-  //   path: "/register",
-  //   component: () => import("@/pages/Register.vue"),
-  //   meta: { guestOnly: true }
-  // },
-  // {
-  //   path: "/dashboard",
-  //   component: () => import("@/layout/DashboardLayout.vue"),
-  //   meta: { requiresAuth: true },
-  //   children: dashboardRoutes
-  // }
 ];
 
 const router = createRouter({

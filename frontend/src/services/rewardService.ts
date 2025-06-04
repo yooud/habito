@@ -46,3 +46,23 @@ export const getRedeemedRewards = async (): Promise<RedeemedReward[] | Error> =>
       return error.response?.data;
   }
 };
+
+export const updateReward = async (id: string, data: CreateRewardRequest): Promise<void | Error> => {
+  try {
+    const response = await api.patch(`/rewards/${id}`, data);
+    return response.data;
+  } catch (error) {
+    if (error instanceof AxiosError)
+      return error.response?.data;
+  }
+};
+
+export const removeReward = async (id: string): Promise<void | Error> => {
+  try {
+    const response = await api.delete(`/rewards/${id}`);
+    return response.data;
+  } catch (error) {
+    if (error instanceof AxiosError)
+      return error.response?.data;
+  }
+};

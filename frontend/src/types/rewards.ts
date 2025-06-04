@@ -3,12 +3,14 @@ export interface Reward {
     title: string;
     description: string;
     pointsRequired: number;
+    emoji: string;
 }
 
 export interface CreateRewardRequest {
     title: string;
     description: string;
     pointsRequired: number;
+    emoji: string;
 }
 
 export interface RedeemedReward {

@@ -17,7 +17,8 @@ export interface CreateHabitRequest {
 }
 
 export interface Habit {
-	_id: string;
+	_id?: string;
+	id?: string;
 	title: string;
 	description: string;
 	points: number;
@@ -50,7 +51,7 @@ export interface AssignHabitResponse {
 export interface HabitResponse {
 	id: string;
   isActive: boolean;
-  habit: Habit
+  habit: Habit;
 }
 
 export interface UpdateAssignedHabitRequest {
