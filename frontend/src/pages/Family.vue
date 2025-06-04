@@ -91,10 +91,18 @@ onMounted(async () => {
             <span class="text-2xl font-bold mb-4 flex items-center">
                 👦 Children
             </span>
-            <Button label="Add Child" icon="pi pi-plus" class="rounded-2xl" @click="addMemberDialog = true" />
+            <Button label="Add Member" icon="pi pi-plus" class="rounded-2xl" @click="addMemberDialog = true" />
             <add-member-dialog v-model="addMemberDialog" />
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <Card v-if="children.length === 0" class="text-center border-0 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50">
+            <template #content>
+                <div class="text-6xl mb-4">👦</div>
+                <h3 class="text-xl font-bold text-gray-700 mb-2">No children added!</h3>
+                <p class="text-gray-500">
+                </p>
+            </template>
+        </Card>
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <Card v-for="child in children" :key="child._id" class="border-0 shadow-lg rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100">
                 <template #content>
                     <div class="flex flex-col items-start justify-between w-full">
@@ -120,7 +128,7 @@ onMounted(async () => {
                             </div>  
                         </div>
                     </div>
-                    <update-member-dialog v-model="updateMemberDialog[child.id]" :member="child" @updated="location.reload()" />
+                    <update-member-dialog v-model="updateMemberDialog[child.id]" :member="child" />
                 </template>                    
             </Card>
         </div>
