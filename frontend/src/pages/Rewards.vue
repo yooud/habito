@@ -20,7 +20,7 @@ const familyMembers = ref<FamilyMember[]>([]);
 const currentUser = computed<FamilyMember>(() => familyMembers.value.find(member => member.uid === authStore.user.uid));
 const isParent = computed(() => currentUser.value?.role === 'parent');
 const createRewardDialog = ref(false);
-const updateRewardDialog = ref(false);
+const updateRewardDialog = ref<Record<string, boolean>>({});
 const rewards = ref<Reward[]>([]);
 const availableRewards = computed(() => rewards.value.filter(reward => !redeemedRewards.value.some(r => r.id === reward._id)));
 const redeemedRewards = ref<Reward[]>([]);
@@ -45,6 +45,10 @@ const updateRewards = async () => {
         redeemedRewards.value = (redeemedResponse as RedeemedReward[]).map(reward => reward.reward);
     } catch (error) {
         toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load rewards.' });
+    }
+
+    for (const reward in rewards.value) {
+        updateRewardDialog[reward.id] = false;
     }
 };
 
@@ -151,10 +155,10 @@ onMounted(async () => {
                                     <span class="font-bold">{{ reward.pointsRequired }} points</span>
                                 </div>
                                 <div v-if="isParent" class="flex flex-row items-center gap-1">
-                                    <Button icon="pi pi-pencil" variant="text" rounded @click="updateRewardDialog = true" />
+                                    <Button icon="pi pi-pencil" variant="text" rounded @click="updateRewardDialog[reward.id] = true" />
                                     <Button icon="pi pi-trash" variant="text" rounded @click="remove(reward)" />
 
-                                    <update-reward-dialog v-model="updateRewardDialog" :reward="reward" @updated="updateRewards" />
+                                    <update-reward-dialog v-model="updateRewardDialog[reward.id]" :reward="reward" @updated="updateRewards" />
                                 </div>  
 
                                 <Button

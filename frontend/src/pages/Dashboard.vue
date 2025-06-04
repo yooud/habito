@@ -20,8 +20,8 @@ const familyMembers = ref<FamilyMember[]>([]);
 const currentUser = computed<FamilyMember>(() => familyMembers.value.find(member => member.uid === authStore.user.uid));
 const isParent = computed(() => currentUser.value?.role === 'parent');
 const createHabitDialog = ref(false);
-const updateHabitDialog = ref(false);
-const historyHabitDialog = ref(false);
+const updateHabitDialog = ref<Record<string, boolean>>({});
+const historyHabitDialog = ref<Record<string, boolean>>({});
 const habits = ref<Habit[]>([]);
 const completions = ref<Record<string, HabitCompletionResponse[]>>({});
 
@@ -71,6 +71,8 @@ const updateHabits = async () => {
                 continue;
             }
             completions.value[habit.id] = completitionResponse as HabitCompletionResponse[];
+            updateHabitDialog[habit.id] = false;
+            historyHabitDialog[habit.id] = false;
         }
     }
 
@@ -201,12 +203,12 @@ onMounted(async () => {
                                     <span class="text-sm">{{ habit.points }} points</span>
                                 </div>
                                 <div v-if="isParent" class="flex flex-row items-center gap-1">
-                                    <Button icon="pi pi-history" variant="text" rounded @click="historyHabitDialog = true" />
-                                    <Button icon="pi pi-pencil" variant="text" rounded @click="updateHabitDialog = true" />
+                                    <Button icon="pi pi-history" variant="text" rounded @click="historyHabitDialog[habit.id] = true" />
+                                    <Button icon="pi pi-pencil" variant="text" rounded @click="updateHabitDialog[habit.id] = true" />
                                     <Button icon="pi pi-trash" variant="text" rounded @click="remove(habit)" />
 
-                                    <history-habit-dialog v-model="historyHabitDialog" :members="familyMembers" :habit="habit" />
-                                    <update-habit-dialog v-model="updateHabitDialog" :members="familyMembers" :habit="habit" @updated="updateHabits" />
+                                    <history-habit-dialog v-model="historyHabitDialog[habit.id]" :members="familyMembers" :habit="habit" />
+                                    <update-habit-dialog v-model="updateHabitDialog[habit.id]" :members="familyMembers" :habit="habit" @updated="updateHabits" />
                                 </div>  
                                 <Button 
                                     v-else 
