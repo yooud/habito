@@ -54,7 +54,7 @@ onMounted(async () => {
             <span class="text-2xl font-bold mb-4 flex items-center">
                 🧔‍♂️ Parents
             </span>
-            <Button label="Delete Family" icon="pi pi-trash" severity="danger" class="rounded-2xl" @click="remove" />
+            <Button label="Delete Family" icon="pi pi-trash" severity="danger" :disabled="!isParent" class="rounded-2xl" @click="remove" />
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <Card v-for="parent in parents" :key="parent._id" class="border-0 shadow-lg rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100">
@@ -91,7 +91,7 @@ onMounted(async () => {
             <span class="text-2xl font-bold mb-4 flex items-center">
                 👦 Children
             </span>
-            <Button label="Add Member" icon="pi pi-plus" class="rounded-2xl" @click="addMemberDialog = true" />
+            <Button label="Add Member" icon="pi pi-plus" :disabled="!isParent" class="rounded-2xl" @click="addMemberDialog = true" />
             <add-member-dialog v-model="addMemberDialog" />
         </div>
         <Card v-if="children.length === 0" class="text-center border-0 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50">
