@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue';
-import { FamilyMember, FamilyResponse } from '@/types/family';
-import { Plus, Check, Star, Target } from 'lucide-vue-next';
+import { FamilyMember } from '@/types/family';
+import { Gift, ShoppingCart, Star } from 'lucide-vue-next';
 import Card from 'primevue/card';
 import { useFamilyStore } from '@/store/familyStore';
 import { useAuthStore } from '@/store/authStore';
@@ -121,7 +121,10 @@ onMounted(async () => {
             <create-reward-dialog v-model="createRewardDialog" @added="updateRewards" />
         </div>
         <div class="w-full">
-            <span class="text-2xl font-bold text-gray-800">Available Rewards</span>
+            <span class="text-2xl font-bold text-gray-800 flex items-center mb-6">
+                <Gift class="mr-3 text-purple-500" :size=28 />
+                Available Rewards
+            </span>
             <Card v-if="availableRewards.length === 0" class="text-center border-0 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50">
                 <template #content>
                     <div class="text-6xl mb-4">🎁</div>
@@ -170,7 +173,10 @@ onMounted(async () => {
             </div>
         </div>
         <div class="w-full" v-if="!isParent && redeemedRewards.length > 0">
-            <span class="text-2xl font-bold text-gray-800">Redeemed Rewards</span>
+            <span class="text-2xl font-bold text-gray-800 flex items-center mb-6">
+                <ShoppingCart class="mr-3 text-green-500" :size=28 />
+                Redeemed Rewards
+            </span>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <Card v-for="reward in redeemedRewards" :key="reward._id" class="border-0 shadow-lg rounded-2xl bg-gradient-to-br from-green-300 to-green-500">
                     <template #content>

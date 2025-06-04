@@ -3,7 +3,8 @@ import type { Error } from "@/types/api";
 import type { 
     FamilyResponse,
     CreateFamilyRequest,
-    AddFamilyMemberRequest
+    AddFamilyMemberRequest,
+    UpdateFamilyMemberRequest
  } from "@/types/family";
 import { AxiosError} from "axios";
 
@@ -30,6 +31,16 @@ export const createFamily = async (data: CreateFamilyRequest): Promise<FamilyRes
 export const addFamilyMember = async (data: AddFamilyMemberRequest): Promise<FamilyResponse | Error> => {
   try {
     const response = await api.post("/family/members", data);
+    return response.data;
+  } catch (error) {
+    if (error instanceof AxiosError)
+      return error.response?.data;
+  }
+}
+
+export const updateFamilyMember = async (id: string, data: UpdateFamilyMemberRequest): Promise<FamilyResponse | Error> => {
+  try {
+    const response = await api.patch(`/family/members/${id}`, data);
     return response.data;
   } catch (error) {
     if (error instanceof AxiosError)

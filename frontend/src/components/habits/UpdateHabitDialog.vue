@@ -165,6 +165,7 @@ defineExpose({
 });
 
 onMounted(() => {
+  console.log(props.habit)
   initialValues.value = {
     name: props.habit.title,
     description: props.habit.description,

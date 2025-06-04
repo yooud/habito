@@ -30,3 +30,8 @@ export interface AddFamilyMemberRequest {
   email: string;
   role: FamilyRole;
 }
+
+export interface UpdateFamilyMemberRequest {
+  name: string;
+  role: FamilyRole;
+}
