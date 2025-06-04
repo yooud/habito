@@ -42,6 +42,7 @@ export class RewardsService {
       title: createDto.title,
       description: createDto.description,
       pointsRequired: createDto.pointsRequired,
+      emoji: createDto.emoji,
     });
     return reward;
   }

@@ -14,6 +14,9 @@ export class Reward extends Document {
 
   @Prop({ type: Types.ObjectId, ref: 'Family', required: true })
   familyId: Types.ObjectId;
+
+  @Prop({ default: '🎁' })
+  emoji: string;
 }
 
 export const RewardSchema = SchemaFactory.createForClass(Reward);
